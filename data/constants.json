@@ -1,0 +1,122 @@
+[
+  {
+    "id": "o2_per_crew_per_sol_kg",
+    "value": 0.84,
+    "unit": "kg",
+    "label": "Oxygen consumed per crew member per sol",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Verified against NASA BVAD metabolic rate table (NASA/TP-2015-218570)."
+  },
+  {
+    "id": "water_per_crew_per_sol_kg",
+    "value": 3.5,
+    "unit": "kg",
+    "label": "Water consumed per crew member per sol",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Baseline for drinking, food preparation, and personal hygiene."
+  },
+  {
+    "id": "food_dry_per_crew_per_sol_kg",
+    "value": 0.62,
+    "unit": "kg",
+    "label": "Dry food mass per crew member per sol",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Dehydrated shelf-stable rations meeting complete nutritional guidelines."
+  },
+  {
+    "id": "food_kcal_per_crew_per_sol",
+    "value": 2500,
+    "unit": "kcal",
+    "label": "Energy intake per crew member per sol",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Metabolic daily energy requirement under surface operations."
+  },
+  {
+    "id": "mars_radiation_msv_per_sol",
+    "value": 0.67,
+    "unit": "mSv",
+    "label": "Surface cosmic ray dose rate",
+    "sourceId": "curiosity_rad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Verified with Curiosity MSL RAD surface measurement average."
+  },
+  {
+    "id": "solar_flux_mars_w_m2",
+    "value": 590,
+    "unit": "W/m2",
+    "label": "Mean Mars surface solar irradiance",
+    "sourceId": "mars_fact_sheet",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Mars Fact Sheet mean insolation at top of atmosphere scaled for surface."
+  },
+  {
+    "id": "sol_length_hours",
+    "value": 24.66,
+    "unit": "hours",
+    "label": "Martian solar day duration",
+    "sourceId": "mars_fact_sheet",
+    "verified": true,
+    "gameScale": 1,
+    "note": "24 hours 39 minutes 35 seconds per sol."
+  },
+  {
+    "id": "dose_limit_mission_msv",
+    "value": 250,
+    "unit": "mSv",
+    "label": "Mission career radiation threshold",
+    "sourceId": "nasa_std_3001",
+    "verified": true,
+    "gameScale": 1,
+    "note": "NASA-STD-3001 health standard design reference mission threshold."
+  },
+  {
+    "id": "crew_size",
+    "value": 4,
+    "unit": "crew",
+    "label": "Surface outpost crew complement",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Reference surface mission crew size."
+  },
+  {
+    "id": "cargo_budget_kg",
+    "value": 40000,
+    "unit": "kg",
+    "label": "Lander payload cargo budget",
+    "sourceId": "nasa_std_3001",
+    "verified": true,
+    "gameScale": 1,
+    "note": "40 metric tonnes total landed payload limit."
+  },
+  {
+    "id": "habitat_base_load_kw",
+    "value": 6,
+    "unit": "kW",
+    "label": "Habitat baseline electrical load",
+    "sourceId": "bvad",
+    "verified": true,
+    "gameScale": 1,
+    "note": "Continuous power for lighting, environmental computers, comms, and thermal control."
+  },
+  {
+    "id": "radiation_gameScale",
+    "value": 2.2,
+    "unit": "multiplier",
+    "label": "Radiation game scale multiplier",
+    "sourceId": "curiosity_rad",
+    "verified": true,
+    "gameScale": 2.2,
+    "note": "Amplified 2.2x so that 180 sols unshielded exceeds the 250 mSv NASA limit, teaching the necessity of shielding."
+  }
+]
