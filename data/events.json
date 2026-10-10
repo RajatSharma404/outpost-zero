@@ -1,0 +1,354 @@
+[
+  {
+    "id": "regional_dust_storm",
+    "title": "Regional Dust Storm Inbound",
+    "narrative": "A high-altitude dust plume sweeps across the plains. Atmospheric opacity (tau) jumps, filtering incoming sunlight.",
+    "weight": 5,
+    "earliestSol": 8,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "tilt_solar_cleaners",
+        "label": "Deploy electrostatic dust wipers and tilt arrays",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "dustFactor", "set": 0.45, "forSols": 6 },
+          { "target": "powerDemandKw", "add": 1.5, "forSols": 6 }
+        ],
+        "lesson": "Active dust mitigation maintains 55% power, but draws continuous actuator energy."
+      },
+      {
+        "id": "ride_out_storm",
+        "label": "Battern down arrays and accept reduced solar output",
+        "effects": [
+          { "target": "dustFactor", "set": 0.70, "forSols": 8 },
+          { "target": "morale", "add": -4 }
+        ],
+        "lesson": "Without specialized cleaning equipment, dust accumulation chokes solar arrays by 70%."
+      }
+    ]
+  },
+  {
+    "id": "global_dust_storm",
+    "title": "Planet-Encircling Dust Event",
+    "narrative": "Orbital telemetry confirms planet-wide storm consolidation. Sun-blocking dust will blot out 90% of sunlight for weeks.",
+    "weight": 3,
+    "earliestSol": 25,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "isolate_noncritical_sectors",
+        "label": "Power down greenhouse and rely on fission baseload",
+        "requires": "fission_unit",
+        "effects": [
+          { "target": "dustFactor", "set": 0.90, "forSols": 18 },
+          { "target": "morale", "add": -10 }
+        ],
+        "lesson": "Nuclear fission is impervious to dust, keeping base life support safe despite severe gloom."
+      },
+      {
+        "id": "deep_emergency_shed",
+        "label": "Emergency grid shedding: draw reserves and cut heaters",
+        "effects": [
+          { "target": "dustFactor", "set": 0.92, "forSols": 20 },
+          { "target": "health", "add": -12 },
+          { "target": "morale", "add": -18 }
+        ],
+        "lesson": "Solar-dependent outposts face catastrophic brownouts when planet-wide storms strike Mars."
+      }
+    ]
+  },
+  {
+    "id": "solar_particle_event",
+    "title": "Solar Particle Event Inbound",
+    "narrative": "A coronal mass ejection releases a torrent of relativistic protons heading directly for the outpost.",
+    "weight": 4,
+    "earliestSol": 12,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "shelter_crew",
+        "label": "Retreat crew into the water-jacket storm shelter",
+        "requires": "storm_shelter",
+        "effects": [
+          { "target": "doseSpe", "add": 15 },
+          { "target": "morale", "add": -8 }
+        ],
+        "lesson": "Dense hydrogen in water walls absorbs primary protons, slashing acute radiation dosage."
+      },
+      {
+        "id": "hunker_in_habitat",
+        "label": "Hunker in central hab corridor and divert power to active coils",
+        "effects": [
+          { "target": "doseSpe", "add": 35 },
+          { "target": "powerDemandKw", "add": 3.0, "forSols": 2 },
+          { "target": "health", "add": -4 }
+        ],
+        "lesson": "Without a dedicated storm shelter, unshielded hab walls allow significant solar proton penetration."
+      }
+    ]
+  },
+  {
+    "id": "water_pump_failure",
+    "title": "Primary ECLSS Water Loop Seized",
+    "narrative": "Cavitation in the primary water recycling centrifuge has seized the bearing, halting graywater purification.",
+    "weight": 4,
+    "earliestSol": 15,
+    "preconditions": [{ "type": "has_item", "itemId": "eclss_recycler" }],
+    "choices": [
+      {
+        "id": "replace_pump_core",
+        "label": "Swap in precision spare impeller and rebuild seal",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "waterKg", "add": -10 },
+          { "target": "morale", "add": -3 }
+        ],
+        "lesson": "Having spare parts allows immediate repair before life-support reserves drain."
+      },
+      {
+        "id": "bypass_to_stored_tanks",
+        "label": "Bypass recycler and consume unrecoverable emergency water",
+        "effects": [
+          { "target": "waterKg", "add": -45 },
+          { "target": "eclssDegraded", "set": 1, "forSols": 10 }
+        ],
+        "lesson": "Without spares, equipment faults force rapid depletion of unrecoverable tank storage."
+      }
+    ]
+  },
+  {
+    "id": "greenhouse_blight",
+    "title": "Hydroponic Nutrient Fungus Outbreak",
+    "narrative": "Spore contamination in the root chambers threatens to wipe out the current potato and leafy green harvest.",
+    "weight": 3,
+    "earliestSol": 20,
+    "preconditions": [{ "type": "has_category", "category": "food" }],
+    "choices": [
+      {
+        "id": "sterilize_and_resead",
+        "label": "Synthesize anti-fungal wash and prune infected trays",
+        "requires": "medical_kit",
+        "effects": [
+          { "target": "waterKg", "add": -25 },
+          { "target": "foodKg", "add": -15 }
+        ],
+        "lesson": "Medical reagents salvage the crop colony at the cost of water flushing."
+      },
+      {
+        "id": "cull_half_crop",
+        "label": "Incinerate half the greenhouse trays to quarantine the rest",
+        "effects": [
+          { "target": "foodKg", "add": -45 },
+          { "target": "morale", "add": -12 }
+        ],
+        "lesson": "Crop failures instantly throw the colony back onto limited pre-packaged rations."
+      }
+    ]
+  },
+  {
+    "id": "battery_thermal_fault",
+    "title": "Battery Thermal Runaway Alarm",
+    "narrative": "Sub-zero cold creeping past insulation has caused internal cell resistance to spike, threatening catastrophic shorts.",
+    "weight": 3,
+    "earliestSol": 10,
+    "preconditions": [{ "type": "has_item", "itemId": "battery_bank" }],
+    "choices": [
+      {
+        "id": "rewire_bms",
+        "label": "Re-route around damaged cell block using spare connectors",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "powerStoredKwh", "add": -20 },
+          { "target": "morale", "add": -2 }
+        ],
+        "lesson": "Isolating bad battery banks avoids fires while preserving 85% of storage capacity."
+      },
+      {
+        "id": "emergency_discharge",
+        "label": "Dump charge into exterior heat dump to prevent explosion",
+        "effects": [
+          { "target": "powerStoredKwh", "add": -60 },
+          { "target": "powerDemandKw", "add": 2.0, "forSols": 4 }
+        ],
+        "lesson": "Dumping stored energy eliminates fire risk but leaves nighttime habitat power precarious."
+      }
+    ]
+  },
+  {
+    "id": "fission_coolant_leak",
+    "title": "Kilopower Secondary Loop Pressure Drop",
+    "narrative": "Telemetry flags sodium-potassium trace leak in the Stirling engine radiator boom outside the habitat.",
+    "weight": 3,
+    "earliestSol": 30,
+    "preconditions": [{ "type": "has_item", "itemId": "fission_unit" }],
+    "choices": [
+      {
+        "id": "robot_weld_loop",
+        "label": "Dispatch rover with spare alloy patch kit to seal radiator",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "powerDemandKw", "add": 2.0, "forSols": 3 },
+          { "target": "health", "add": -3 }
+        ],
+        "lesson": "Complex fission engines require active maintenance to preserve uninterrupted output."
+      },
+      {
+        "id": "throttle_reactor",
+        "label": "Throttle reactor core to 50% power to lower loop pressure",
+        "effects": [
+          { "target": "fissionThrottled", "set": 0.50, "forSols": 12 },
+          { "target": "morale", "add": -8 }
+        ],
+        "lesson": "Throttling a fission reactor halves energy generation during critical operations."
+      }
+    ]
+  },
+  {
+    "id": "cold_snap",
+    "title": "Martian Aphelion Cold Snap",
+    "narrative": "Surface temperature plunges to -115°C. Habitat hull heat loss spikes, demanding massive electrical thermal support.",
+    "weight": 4,
+    "earliestSol": 18,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "regolith_thermal_buffer",
+        "label": "Lean on regolith berm insulation and cycle internal blowers",
+        "requires": "regolith_shield",
+        "effects": [
+          { "target": "powerDemandKw", "add": 2.0, "forSols": 5 },
+          { "target": "morale", "add": -2 }
+        ],
+        "lesson": "Regolith is not just a radiation shield; its thermal mass stabilizes habitat temperature."
+      },
+      {
+        "id": "crank_resistive_heaters",
+        "label": "Run electrical heaters at maximum output to protect hull seals",
+        "effects": [
+          { "target": "powerDemandKw", "add": 6.5, "forSols": 5 },
+          { "target": "health", "add": -5 }
+        ],
+        "lesson": "Uninsulated surface habitats consume extreme power just to stay above freezing."
+      }
+    ]
+  },
+  {
+    "id": "perchlorate_dust_leak",
+    "title": "Airlock Perchlorate Ingress",
+    "narrative": "Fine electrostatically charged Martian soil containing toxic perchlorates breached outer suit vacuum brushes.",
+    "weight": 3,
+    "earliestSol": 14,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "medical_chelation",
+        "label": "Administer thyroid blockers and flush air scrubber cartridges",
+        "requires": "medical_kit",
+        "effects": [
+          { "target": "waterKg", "add": -15 },
+          { "target": "health", "add": -2 }
+        ],
+        "lesson": "Medical countermeasures neutralize toxic Martian soil exposure before thyroid harm occurs."
+      },
+      {
+        "id": "strict_quarantine",
+        "label": "Lock down living quarters and vent airlock volume",
+        "effects": [
+          { "target": "o2Kg", "add": -12 },
+          { "target": "morale", "add": -10 },
+          { "target": "health", "add": -8 }
+        ],
+        "lesson": "Venting contaminated air bleeds valuable oxygen stores into the thin Martian atmosphere."
+      }
+    ]
+  },
+  {
+    "id": "solar_conjunction_blackout",
+    "title": "Solar Conjunction Comms Blackout",
+    "narrative": "The Sun passes directly between Earth and Mars, scrambling radio transmission for two full weeks.",
+    "weight": 2,
+    "earliestSol": 40,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "recreation_autonomous_protocols",
+        "label": "Implement autonomous crew schedule with recreation rotations",
+        "requires": "rec_module",
+        "effects": [
+          { "target": "morale", "add": 5 }
+        ],
+        "lesson": "Crew morale facilities alleviate isolation anxiety when Earth contact is impossible."
+      },
+      {
+        "id": "strict_ration_lockdown",
+        "label": "Enforce high-stress emergency drills and tight rationing",
+        "effects": [
+          { "target": "morale", "add": -14 },
+          { "target": "foodKg", "add": 10 }
+        ],
+        "lesson": "Isolation compounds psychological strain when crew members lack relaxation outlets."
+      }
+    ]
+  },
+  {
+    "id": "crop_windfall",
+    "title": "Hydroponic Super-Harvest",
+    "narrative": "Optimal LED spectrum calibration produced an unexpected bumper crop of fast-growing microgreens and radishes.",
+    "weight": 3,
+    "earliestSol": 22,
+    "preconditions": [{ "type": "has_category", "category": "food" }],
+    "choices": [
+      {
+        "id": "feast_and_celebrate",
+        "label": "Host a feast for the crew to celebrate the milestone",
+        "effects": [
+          { "target": "morale", "add": 12 },
+          { "target": "health", "add": 5 }
+        ],
+        "lesson": "Fresh food provides massive psychological and nutritional boosts in deep space."
+      },
+      {
+        "id": "dry_and_stockpile",
+        "label": "Dehydrate and vacuum-seal surplus calories into emergency rations",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "foodKg", "add": 20 },
+          { "target": "powerDemandKw", "add": 1.5, "forSols": 3 }
+        ],
+        "lesson": "Preserving surplus food requires electrical drying energy but extends survival margins."
+      }
+    ]
+  },
+  {
+    "id": "earth_resupply_offer",
+    "title": "Emergency Trans-Mars Injection Offer",
+    "narrative": "NASA offers to expedite an autonomous cargo trajectory carrying emergency consumables to Mars.",
+    "weight": 2,
+    "earliestSol": 50,
+    "preconditions": [],
+    "choices": [
+      {
+        "id": "accept_resupply",
+        "label": "Guide incoming payload via radar transponder (incurs score penalty)",
+        "requires": "spare_parts_kit",
+        "effects": [
+          { "target": "waterKg", "add": 120 },
+          { "target": "o2Kg", "add": 30 },
+          { "target": "foodKg", "add": 50 },
+          { "target": "resupplyAccepted", "set": 1 },
+          { "target": "morale", "add": -6 }
+        ],
+        "lesson": "Accepting emergency resupply saves lives but demonstrates failure of self-sufficiency."
+      },
+      {
+        "id": "decline_resupply",
+        "label": "Decline drop and trust existing outpost equipment",
+        "effects": [
+          { "target": "morale", "add": 8 }
+        ],
+        "lesson": "Declining external aid validates engineering autonomy, boosting team pride."
+      }
+    ]
+  }
+]
