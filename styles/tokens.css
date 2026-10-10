@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@theme {
+  --color-basalt: #15110F;
+  --color-basalt-2: #1D1815;
+  --color-rule: #3A302A;
+  --color-ink: #EDE3D6;
+  --color-ink-dim: #A89B8C;
+  --color-oxide: #D9622B;
+  --color-ember: #F0A24B;
+  --color-sage: #8FB38A;
+  --color-caution: #E9C46A;
+  --color-alarm: #E0533D;
+  --color-sky-clear: #C98B63;
+  --color-sky-dust: #7A4A32;
+
+  --color-water: #5B8CA8;
+  --color-water-dark: #1B2833;
+  --color-water-border: #4E8098;
+  --color-water-text: #90C2DE;
+
+  --color-water-accent: #6A9EC0;
+  --color-alarm-dark: #2D1612;
+
+  --color-crater: #5E3725;
+  --color-regolith-dark: #2A160E;
+  --color-regolith-mid: #5C3422;
+  --color-regolith-berm: #422518;
+  --color-regolith-stroke: #6E3B24;
+  --color-ground-line: #7A422B;
+
+  --color-hab-outer: #181310;
+  --color-hab-inner: #2A221C;
+  --color-hab-dim: #1D1815;
+  --color-greenhouse-bg: #1C2920;
+  --color-greenhouse-dim: #26201B;
+
+  --color-event-dark: #191411;
+  --color-event-border: #2C221D;
+  --color-event-dim: #5A4A3E;
+  --color-event-highlight: #7A6455;
+  --color-fail-bg: #261410;
+
+  --font-condensed: var(--font-barlow-condensed), "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+  --font-serif: var(--font-source-serif), "Source Serif 4", Georgia, serif;
+
+  --radius-none: 0px;
+  --radius-sharp: 2px;
+}
+
+:root {
+  --basalt: #15110F;
+  --basalt-overlay: rgba(21, 17, 15, 0.82);
+  --basalt-2: #1D1815;
+  --rule: #3A302A;
+  --ink: #EDE3D6;
+  --ink-dim: #A89B8C;
+  --oxide: #D9622B;
+  --ember: #F0A24B;
+  --sage: #8FB38A;
+  --caution: #E9C46A;
+  --alarm: #E0533D;
+  --alarm-dark: #2D1612;
+  --sky-clear: #C98B63;
+  --sky-dust: #7A4A32;
+
+  --water: #5B8CA8;
+  --water-dark: #1B2833;
+  --water-border: #4E8098;
+  --water-text: #90C2DE;
+  --water-accent: #6A9EC0;
+
+  --crater: #5E3725;
+  --regolith-dark: #2A160E;
+  --regolith-mid: #5C3422;
+  --regolith-berm: #422518;
+  --regolith-stroke: #6E3B24;
+  --ground-line: #7A422B;
+
+  --hab-outer: #181310;
+  --hab-inner: #2A221C;
+  --hab-dim: #1D1815;
+  --greenhouse-bg: #1C2920;
+  --greenhouse-dim: #26201B;
+
+  --event-dark: #191411;
+  --event-border: #2C221D;
+  --event-dim: #5A4A3E;
+  --event-highlight: #7A6455;
+  --fail-bg: #261410;
+
+  --font-condensed: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-serif: "Source Serif 4", Georgia, serif;
+
+  --fs-micro: 9px;
+  --fs-caption: 10px;
+  --fs-detail: 11px;
+  --fs-label: 12px;
+  --fs-body: 16px;
+  --fs-lead: 20px;
+  --fs-gauge: 36px;
+  --fs-numeral: 48px;
+  --fs-giant: 56px;
+  --fs-display: clamp(40px, 8vw, 112px);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --r-0: 0px;
+  --r-1: 2px;
+}
+
+body {
+  background-color: var(--basalt);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessible focus outline */
+*:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
