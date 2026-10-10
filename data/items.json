@@ -1,0 +1,185 @@
+[
+  {
+    "id": "solar_small",
+    "name": "Compact Solar Array",
+    "category": "power",
+    "massKg": 1800,
+    "powerKw": -5,
+    "effects": [
+      { "type": "power_gen", "mode": "solar", "value": 5 }
+    ],
+    "blurb": "Lightweight deployable solar wings generating an average of 5 kW.",
+    "tradeoff": "Generates 5 kW when clear, but output drops sharply during dust storms and winter.",
+    "sourceId": "mars_fact_sheet",
+    "verified": true
+  },
+  {
+    "id": "solar_large",
+    "name": "Heavy Solar Farm",
+    "category": "power",
+    "massKg": 4200,
+    "powerKw": -12,
+    "effects": [
+      { "type": "power_gen", "mode": "solar", "value": 12 }
+    ],
+    "blurb": "Broad solar panel field producing up to 12 kW under clear skies.",
+    "tradeoff": "Heavy launch mass and yields near zero power when a global dust storm blankets the sky.",
+    "sourceId": "opportunity_storm",
+    "verified": true
+  },
+  {
+    "id": "fission_unit",
+    "name": "Kilopower Fission Reactor",
+    "category": "power",
+    "massKg": 6000,
+    "powerKw": -10,
+    "effects": [
+      { "type": "power_gen", "mode": "fission", "value": 10 }
+    ],
+    "blurb": "Compact Stirling nuclear reactor delivering 10 kW day and night.",
+    "tradeoff": "Weighs 6 tonnes, requires an exclusion zone, and risks coolant leaks.",
+    "sourceId": "kilopower_krusty",
+    "verified": true
+  },
+  {
+    "id": "battery_bank",
+    "name": "High-Capacity Battery Bank",
+    "category": "power",
+    "massKg": 1500,
+    "powerKw": 0,
+    "effects": [
+      { "type": "battery_storage", "capacityKwh": 120 }
+    ],
+    "blurb": "Adds 120 kWh of energy storage to keep lights on through the night.",
+    "tradeoff": "Takes up 1.5 tonnes of cargo without generating any new energy.",
+    "sourceId": "mars_fact_sheet",
+    "verified": true
+  },
+  {
+    "id": "eclss_recycler",
+    "name": "Closed-Loop ECLSS Recycler",
+    "category": "lifesupport",
+    "massKg": 3500,
+    "powerKw": 3,
+    "effects": [
+      { "type": "water_recovery", "rate": 0.90 },
+      { "type": "o2_recovery", "rate": 0.50 }
+    ],
+    "blurb": "Recycles 90% of gray water and urine, plus partial oxygen scrub.",
+    "tradeoff": "Draws 3 kW continuously; if power browns out, water recovery halts immediately.",
+    "sourceId": "bvad",
+    "verified": true
+  },
+  {
+    "id": "moxie_scaleup",
+    "name": "MOXIE Industrial O2 Extractor",
+    "category": "lifesupport",
+    "massKg": 2000,
+    "powerKw": 4,
+    "effects": [
+      { "type": "o2_production", "kgPerSol": 2.0 }
+    ],
+    "blurb": "Extracts 2 kg of breathable O2 per sol from Martian carbon dioxide.",
+    "tradeoff": "Draws 4 kW of electricity and wears down high-temperature ceramic cells.",
+    "sourceId": "moxie_perseverance",
+    "verified": true
+  },
+  {
+    "id": "regolith_shield",
+    "name": "Regolith Berm & Shielding Kit",
+    "category": "shielding",
+    "massKg": 5000,
+    "powerKw": 0,
+    "effects": [
+      { "type": "radiation_reduction", "attenuation": 0.40 }
+    ],
+    "blurb": "Bulldozing regolith over the hab slashes daily cosmic radiation by 40%.",
+    "tradeoff": "At 5 tonnes, it consumes an eighth of your total rocket cargo budget.",
+    "sourceId": "curiosity_rad",
+    "verified": true
+  },
+  {
+    "id": "storm_shelter",
+    "name": "Water-Jacket Storm Shelter",
+    "category": "shielding",
+    "massKg": 3000,
+    "powerKw": 0,
+    "effects": [
+      { "type": "solar_particle_protection", "attenuation": 0.70 }
+    ],
+    "blurb": "Reinforced inner shelter that cuts solar flare particle doses by 70%.",
+    "tradeoff": "Takes 3 tonnes of mass and cramps the crew during extended solar events.",
+    "sourceId": "nasa_std_3001",
+    "verified": true
+  },
+  {
+    "id": "greenhouse_small",
+    "name": "Hydroponic Salad Dome",
+    "category": "food",
+    "massKg": 2500,
+    "powerKw": 3,
+    "effects": [
+      { "type": "food_supplement", "kcalPerSol": 3000, "waterUsePerSol": 4.0, "moralePerSol": 0.5 }
+    ],
+    "blurb": "Grows fresh greens, providing 3,000 kcal per sol and lifting crew morale.",
+    "tradeoff": "Drains 3 kW of power and 4 kg of water each sol, and crops can suffer blight.",
+    "sourceId": "veggie_iss",
+    "verified": true
+  },
+  {
+    "id": "greenhouse_large",
+    "name": "Full Agricultural Biosphere",
+    "category": "food",
+    "massKg": 5000,
+    "powerKw": 6,
+    "effects": [
+      { "type": "food_supplement", "kcalPerSol": 7500, "waterUsePerSol": 9.0, "moralePerSol": 1.2 }
+    ],
+    "blurb": "Large crop farm producing 7,500 kcal per sol—nearly enough for the whole crew.",
+    "tradeoff": "Massive 5-tonne weight, 6 kW power drain, and heavy daily water consumption.",
+    "sourceId": "veggie_iss",
+    "verified": true
+  },
+  {
+    "id": "spare_parts_kit",
+    "name": "Precision Spares & Fab Kit",
+    "category": "spares",
+    "massKg": 1200,
+    "powerKw": 0,
+    "effects": [
+      { "type": "failure_mitigation", "reduction": 0.50 }
+    ],
+    "blurb": "Replacement pumps, seals, and a 3D printer halve equipment breakdown risks.",
+    "tradeoff": "1,200 kg of cargo that does nothing unless machines begin breaking down.",
+    "sourceId": "bvad",
+    "verified": true
+  },
+  {
+    "id": "medical_kit",
+    "name": "Advanced Trauma & Health Bay",
+    "category": "spares",
+    "massKg": 400,
+    "powerKw": 0.5,
+    "effects": [
+      { "type": "health_recovery", "injuryMitigation": 0.60 }
+    ],
+    "blurb": "Medical diagnostic gear and drugs to protect crew vitality and treat accidents.",
+    "tradeoff": "Draws 0.5 kW constantly and takes 400 kg of cargo.",
+    "sourceId": "nasa_std_3001",
+    "verified": true
+  },
+  {
+    "id": "rec_module",
+    "name": "Crew Habitat & Rec Module",
+    "category": "comfort",
+    "massKg": 800,
+    "powerKw": 0.5,
+    "effects": [
+      { "type": "morale_boost", "perSol": 1.0 }
+    ],
+    "blurb": "Private cubicles, gym equipment, and entertainment to sustain crew mental health.",
+    "tradeoff": "Draws 0.5 kW continuous power without providing life support or shielding.",
+    "sourceId": "nasa_std_3001",
+    "verified": true
+  }
+]
