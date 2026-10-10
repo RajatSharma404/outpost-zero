@@ -1,0 +1,66 @@
+[
+  {
+    "id": "bvad",
+    "title": "Life Support Baseline Values and Assumptions Document (NASA/TP-2015-218570 Rev 2)",
+    "publisher": "NASA Johnson Space Center",
+    "url": "https://ntrs.nasa.gov/search?q=Baseline%20Values%20and%20Assumptions%20Document",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Metabolic rates for crew O2 (0.84 kg/sol), water (3.5 kg/sol), and food dry mass (0.62 kg/sol)."
+  },
+  {
+    "id": "mars_fact_sheet",
+    "title": "Mars Fact Sheet",
+    "publisher": "NASA Goddard Space Flight Center",
+    "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Mars solar irradiance (590 W/m2 mean), sol duration (24.66 hours), gravity, and atmospheric pressure."
+  },
+  {
+    "id": "curiosity_rad",
+    "title": "Radiation Assessment Detector (RAD) Surface Measurements",
+    "publisher": "Southwest Research Institute / NASA MSL",
+    "url": "https://mars.nasa.gov/msl/spacecraft/instruments/rad/",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Galactic cosmic ray surface dose rate equivalent (0.67 mSv/sol average)."
+  },
+  {
+    "id": "nasa_std_3001",
+    "title": "NASA-STD-3001: Space Flight Human-System Standard",
+    "publisher": "NASA Technical Standards Program",
+    "url": "https://standards.nasa.gov",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Permissible career radiation exposure levels and 250 mSv mission design threshold."
+  },
+  {
+    "id": "moxie_perseverance",
+    "title": "Mars Oxygen ISRU Experiment (MOXIE)",
+    "publisher": "NASA JPL / MIT",
+    "url": "https://mars.nasa.gov/mars2020/spacecraft/instruments/moxie/",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Solid oxide electrolysis O2 extraction scaling principles from atmospheric CO2."
+  },
+  {
+    "id": "kilopower_krusty",
+    "title": "Kilopower Project (KRUSTY Fission Surface Power)",
+    "publisher": "NASA Glenn Research Center / Los Alamos",
+    "url": "https://www.nasa.gov",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Stirling fission surface reactor mass, 10 kWe continuous rating, and shadow radiation exclusion."
+  },
+  {
+    "id": "opportunity_storm",
+    "title": "Opportunity 2018 Global Dust Storm Telemetry",
+    "publisher": "NASA Science Mission Directorate",
+    "url": "https://science.nasa.gov",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Tau opacity dynamics, solar panel obscuration drop to <5% baseline insolation."
+  },
+  {
+    "id": "veggie_iss",
+    "title": "Veggie and Advanced Plant Habitat Experiments",
+    "publisher": "NASA Kennedy Space Center",
+    "url": "https://www.nasa.gov",
+    "accessedOn": "2026-10-10",
+    "usedFor": "Photoperiod LED power draw, transpiration water recovery, and caloric supplementation."
+  }
+]
