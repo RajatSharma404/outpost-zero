@@ -23,6 +23,20 @@ export default function MissionPage() {
   } = useGameStore();
 
   const [activeMobileTab, setActiveMobileTab] = useState<'cutaway' | 'meters' | 'log'>('cutaway');
+  const [realtimeData, setRealtimeData] = useState<{
+    level: string;
+    kIndex: number;
+    marsEphemeris?: { distMillionKm: number; signalDelayFormatted: string };
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/space-weather')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && !data.offline) setRealtimeData(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-initialize if opened directly without prior pack launch
   useEffect(() => {
@@ -182,6 +196,33 @@ export default function MissionPage() {
           </Link>
         </nav>
       </header>
+
+      {/* Live NASA Deep Space Telemetry Ribbon */}
+      {realtimeData && realtimeData.marsEphemeris && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 'var(--space-2)',
+            backgroundColor: 'var(--basalt-2)',
+            border: '1px solid var(--rule)',
+            padding: 'var(--space-1) var(--space-3)',
+            marginBottom: 'var(--space-2)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--fs-caption)',
+            color: 'var(--ink-dim)',
+          }}
+        >
+          <div>
+            <span style={{ color: 'var(--ember)', fontWeight: 600 }}>LIVE NASA/JPL TELEMETRY:</span> Range {realtimeData.marsEphemeris.distMillionKm}M km | 1-Way Comms Latency: <strong style={{ color: 'var(--ink)' }}>{realtimeData.marsEphemeris.signalDelayFormatted}</strong>
+          </div>
+          <div>
+            Space Weather: <span style={{ color: realtimeData.level === 'storm' ? 'var(--alarm)' : realtimeData.level === 'active' ? 'var(--caution)' : 'var(--sage)' }}>Kp {realtimeData.kIndex} ({realtimeData.level.toUpperCase()})</span>
+          </div>
+        </div>
+      )}
 
       {/* Clock and Simulation Speed Rail */}
       <div style={{ marginBottom: 'var(--space-3)' }}>

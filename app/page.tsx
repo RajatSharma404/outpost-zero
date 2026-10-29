@@ -10,6 +10,19 @@ interface SpaceWeatherData {
   level: 'quiet' | 'active' | 'storm';
   kIndex: number;
   fetchedAt: string;
+  marsEphemeris?: {
+    deltaAU: number;
+    distMillionKm: number;
+    lightTimeMin: number;
+    signalDelayFormatted: string;
+    source: string;
+  };
+  spaceWeatherEvents?: {
+    hasActiveCME: boolean;
+    recentEventCount: number;
+    latestCMEId: string | null;
+    source: string;
+  };
   offline: boolean;
 }
 
@@ -89,36 +102,68 @@ export default function LandingPage() {
           </span>
         </div>
 
-        {/* Space Weather Today Live Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        {/* Live NASA & NOAA Telemetry Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
           {spaceWeather && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                backgroundColor: 'var(--basalt-2)',
-                border: '1px solid var(--rule)',
-                padding: 'var(--space-1) var(--space-3)',
-                borderRadius: 'var(--r-0)',
-              }}
-            >
-              <span
+            <>
+              <div
                 style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-label)',
-                  color: 'var(--ink-dim)',
-                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-2)',
+                  backgroundColor: 'var(--basalt-2)',
+                  border: '1px solid var(--rule)',
+                  padding: 'var(--space-1) var(--space-3)',
+                  borderRadius: 'var(--r-0)',
                 }}
               >
-                Space Weather Today (NOAA SWPC):
-              </span>
-              <Tag
-                label={`Kp ${spaceWeather.kIndex} // ${spaceWeather.level.toUpperCase()}`}
-                variant={spaceWeather.level === 'storm' ? 'alarm' : spaceWeather.level === 'active' ? 'caution' : 'nominal'}
-                size="sm"
-              />
-            </div>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--fs-label)',
+                    color: 'var(--ink-dim)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Space Weather (NOAA SWPC):
+                </span>
+                <Tag
+                  label={`Kp ${spaceWeather.kIndex} // ${spaceWeather.level.toUpperCase()}`}
+                  variant={spaceWeather.level === 'storm' ? 'alarm' : spaceWeather.level === 'active' ? 'caution' : 'nominal'}
+                  size="sm"
+                />
+              </div>
+
+              {spaceWeather.marsEphemeris && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    backgroundColor: 'var(--basalt-2)',
+                    border: '1px solid var(--rule)',
+                    padding: 'var(--space-1) var(--space-3)',
+                    borderRadius: 'var(--r-0)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 'var(--fs-label)',
+                      color: 'var(--ink-dim)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Mars Comms Lag (JPL Horizons):
+                  </span>
+                  <Tag
+                    label={`${spaceWeather.marsEphemeris.signalDelayFormatted} (${spaceWeather.marsEphemeris.distMillionKm}M km)`}
+                    variant="nominal"
+                    size="sm"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <nav style={{ display: 'flex', gap: 'var(--space-3)' }}>

@@ -52,5 +52,9 @@ describe('Server API Routes', () => {
     const json = await res.json();
     expect(['quiet', 'active', 'storm']).toContain(json.level);
     expect(json.fetchedAt).toBeDefined();
+    expect(json.marsEphemeris).toBeDefined();
+    expect(json.marsEphemeris.distMillionKm).toBeGreaterThan(50);
+    expect(json.marsEphemeris.lightTimeMin).toBeGreaterThan(3);
+    expect(json.marsAtmosphere).toBeDefined();
   });
 });
