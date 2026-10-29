@@ -44,6 +44,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
       role="button"
       tabIndex={0}
       aria-pressed={isPacked}
+      aria-label={`${item.name}, category ${item.category}, mass ${item.massKg} kilograms, power ${powerDisplay}. Status: ${isPacked ? 'Loaded in manifest' : 'Unloaded'}`}
       onClick={() => onToggle(item.id)}
       onKeyDown={(e) => {
         if (e.key === ' ' || e.key === 'Enter') {
@@ -54,6 +55,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
       style={{
         backgroundColor: isPacked ? 'var(--basalt-2)' : 'var(--basalt)',
         border: `1px solid ${isPacked ? 'var(--ember)' : 'var(--rule)'}`,
+        borderLeft: isPacked ? '4px solid var(--ember)' : '4px solid var(--rule)',
         borderRadius: 'var(--r-1)',
         padding: 'var(--space-4)',
         cursor: 'pointer',
@@ -66,7 +68,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
         outline: 'none',
       }}
     >
-      {/* Top Header: Icon + Category + Stamped LOADED Mark */}
+      {/* Top Header: Icon + Category + Checkbox Affordance + Stamped LOADED Mark */}
       <div>
         <div
           style={{
@@ -74,6 +76,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             marginBottom: 'var(--space-2)',
+            gap: 'var(--space-2)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -115,39 +118,61 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
             </div>
           </div>
 
-          {/* Stamped LOADED mark (not a soft checkmark) */}
-          {isPacked ? (
-            <span
+          {/* Checkbox Affordance + Stamp */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+            <div
+              aria-hidden="true"
               style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: 'var(--fs-label)',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: 'var(--ember)',
-                border: '1.5px solid var(--ember)',
-                padding: '2px 6px',
-                transform: 'rotate(-4deg)',
-                display: 'inline-block',
-                textTransform: 'uppercase',
+                width: '16px',
+                height: '16px',
+                border: `1.5px solid ${isPacked ? 'var(--ember)' : 'var(--rule)'}`,
+                backgroundColor: isPacked ? 'var(--ember)' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--basalt)',
+                fontSize: 'var(--fs-detail)',
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                borderRadius: 'var(--r-0)',
               }}
             >
-              LOADED
-            </span>
-          ) : (
-            <span
-              style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: 'var(--fs-label)',
-                letterSpacing: '0.1em',
-                color: 'var(--rule)',
-                border: '1px dashed var(--rule)',
-                padding: '2px 6px',
-                textTransform: 'uppercase',
-              }}
-            >
-              AVAILABLE
-            </span>
-          )}
+              {isPacked ? '✓' : ''}
+            </div>
+
+            {isPacked ? (
+              <span
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: 'var(--fs-label)',
+                  fontWeight: 700,
+                  letterSpacing: '0.15em',
+                  color: 'var(--ember)',
+                  border: '1.5px solid var(--ember)',
+                  padding: '1px var(--space-1)',
+                  transform: 'rotate(-4deg)',
+                  display: 'inline-block',
+                  textTransform: 'uppercase',
+                }}
+              >
+                LOADED
+              </span>
+            ) : (
+              <span
+                style={{
+                  fontFamily: 'var(--font-condensed)',
+                  fontSize: 'var(--fs-label)',
+                  letterSpacing: '0.1em',
+                  color: 'var(--ink-dim)',
+                  border: '1px dashed var(--rule)',
+                  padding: '1px var(--space-1)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                AVAILABLE
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Blurb */}
@@ -167,7 +192,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
         <div
           style={{
             backgroundColor: 'var(--basalt)',
-            borderLeft: '2px solid var(--oxide)',
+            borderLeft: '2px solid var(--caution)',
             padding: 'var(--space-2) var(--space-3)',
             marginBottom: 'var(--space-3)',
           }}
@@ -175,10 +200,10 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
           <span
             style={{
               fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-caption)',
+              fontSize: 'var(--fs-detail)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              color: 'var(--oxide)',
+              color: 'var(--caution)',
               display: 'block',
               fontWeight: 700,
             }}
@@ -188,7 +213,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
           <span
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-label)',
+              fontSize: 'var(--fs-detail)',
               color: 'var(--ink-dim)',
               lineHeight: 1.3,
               display: 'block',
@@ -199,8 +224,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, isPacked, onToggle }) 
         </div>
       </div>
 
-      {/* Footer: Mass & Power specs */}
+      {/* Footer: Mass & Power specs with tabular numerals */}
       <div
+        className="tabular-nums"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
