@@ -5,7 +5,8 @@
     "publisher": "NASA Johnson Space Center",
     "url": "https://ntrs.nasa.gov/search?q=Baseline%20Values%20and%20Assumptions%20Document",
     "accessedOn": "2026-10-10",
-    "usedFor": "Metabolic rates for crew O2 (0.84 kg/sol), water (3.5 kg/sol), and food dry mass (0.62 kg/sol)."
+    "usedFor": "Metabolic rates for crew O2 (0.84 kg/sol), water (3.5 kg/sol), and food dry mass (0.62 kg/sol).",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "mars_fact_sheet",
@@ -13,7 +14,8 @@
     "publisher": "NASA Goddard Space Flight Center",
     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
     "accessedOn": "2026-10-10",
-    "usedFor": "Mars solar irradiance (590 W/m2 mean), sol duration (24.66 hours), gravity, and atmospheric pressure."
+    "usedFor": "Mars solar irradiance (590 W/m2 mean), sol duration (24.66 hours), gravity, and atmospheric pressure.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "curiosity_rad",
@@ -21,7 +23,8 @@
     "publisher": "Southwest Research Institute / NASA MSL",
     "url": "https://mars.nasa.gov/msl/spacecraft/instruments/rad/",
     "accessedOn": "2026-10-10",
-    "usedFor": "Galactic cosmic ray surface dose rate equivalent (0.67 mSv/sol average)."
+    "usedFor": "Galactic cosmic ray surface dose rate equivalent (0.67 mSv/sol average).",
+    "sourceType": "MEASURED"
   },
   {
     "id": "nasa_std_3001",
@@ -29,7 +32,8 @@
     "publisher": "NASA Technical Standards Program",
     "url": "https://standards.nasa.gov",
     "accessedOn": "2026-10-10",
-    "usedFor": "Permissible career radiation exposure levels and 250 mSv mission design threshold."
+    "usedFor": "Permissible career radiation exposure levels and 250 mSv mission design threshold.",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "moxie_perseverance",
@@ -37,7 +41,8 @@
     "publisher": "NASA JPL / MIT",
     "url": "https://mars.nasa.gov/mars2020/spacecraft/instruments/moxie/",
     "accessedOn": "2026-10-10",
-    "usedFor": "Solid oxide electrolysis O2 extraction scaling principles from atmospheric CO2."
+    "usedFor": "Solid oxide electrolysis O2 extraction scaling principles from atmospheric CO2.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "kilopower_krusty",
@@ -45,7 +50,8 @@
     "publisher": "NASA Glenn Research Center / Los Alamos",
     "url": "https://www.nasa.gov",
     "accessedOn": "2026-10-10",
-    "usedFor": "Stirling fission surface reactor mass, 10 kWe continuous rating, and shadow radiation exclusion."
+    "usedFor": "Stirling fission surface reactor mass, 10 kWe continuous rating, and shadow radiation exclusion.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "opportunity_storm",
@@ -53,7 +59,8 @@
     "publisher": "NASA Science Mission Directorate",
     "url": "https://science.nasa.gov",
     "accessedOn": "2026-10-10",
-    "usedFor": "Tau opacity dynamics, solar panel obscuration drop to <5% baseline insolation."
+    "usedFor": "Tau opacity dynamics, solar panel obscuration drop to <5% baseline insolation.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "veggie_iss",
@@ -61,6 +68,7 @@
     "publisher": "NASA Kennedy Space Center",
     "url": "https://www.nasa.gov",
     "accessedOn": "2026-10-10",
-    "usedFor": "Photoperiod LED power draw, transpiration water recovery, and caloric supplementation."
+    "usedFor": "Photoperiod LED power draw, transpiration water recovery, and caloric supplementation.",
+    "sourceType": "NASA STANDARD"
   }
 ]
