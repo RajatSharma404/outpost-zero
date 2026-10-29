@@ -198,17 +198,59 @@ export default function PackPage() {
                 Hardware Modules ({packedItems.length} Loaded)
               </h2>
 
-              {/* Category Filter Tabs */}
-              <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}>
+              {/* Category Filter Tabs (Accessible Tablist with Arrow Navigation) */}
+              <div
+                role="tablist"
+                aria-label="Hardware module categories"
+                style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}
+                onKeyDown={(e) => {
+                  const categories = ['all', 'power', 'lifesupport', 'shielding', 'food', 'spares', 'comfort'];
+                  const currentIndex = categories.indexOf(activeCategory);
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % categories.length;
+                    setActiveCategory(categories[nextIndex]);
+                    document.getElementById(`tab-cat-${categories[nextIndex]}`)?.focus();
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + categories.length) % categories.length;
+                    setActiveCategory(categories[prevIndex]);
+                    document.getElementById(`tab-cat-${categories[prevIndex]}`)?.focus();
+                  } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    setActiveCategory(categories[0]);
+                    document.getElementById(`tab-cat-${categories[0]}`)?.focus();
+                  } else if (e.key === 'End') {
+                    e.preventDefault();
+                    setActiveCategory(categories[categories.length - 1]);
+                    document.getElementById(`tab-cat-${categories[categories.length - 1]}`)?.focus();
+                  }
+                }}
+              >
                 {['all', 'power', 'lifesupport', 'shielding', 'food', 'spares', 'comfort'].map((cat) => (
-                  <Button
+                  <button
                     key={cat}
-                    variant={activeCategory === cat ? 'primary' : 'ghost'}
-                    size="sm"
+                    id={`tab-cat-${cat}`}
+                    role="tab"
+                    aria-selected={activeCategory === cat}
+                    tabIndex={activeCategory === cat ? 0 : -1}
                     onClick={() => setActiveCategory(cat)}
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 'var(--fs-label)',
+                      textTransform: 'uppercase',
+                      padding: 'var(--space-1) var(--space-2)',
+                      border: `1px solid ${activeCategory === cat ? 'var(--ember)' : 'var(--rule)'}`,
+                      backgroundColor: activeCategory === cat ? 'var(--ember)' : 'transparent',
+                      color: activeCategory === cat ? 'var(--basalt)' : 'var(--ink)',
+                      fontWeight: activeCategory === cat ? 700 : 500,
+                      cursor: 'pointer',
+                      borderRadius: 'var(--r-0)',
+                      transition: 'background-color 0.1s ease',
+                    }}
                   >
                     {cat}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
