@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import type { SimulationState, MeterType } from '../../lib/sim/types';
 import { MeterGauge } from './MeterGauge';
 import { getConstantValue } from '../../lib/data';
@@ -9,7 +9,7 @@ interface MeterRailProps {
   state: SimulationState;
 }
 
-export const MeterRail: React.FC<MeterRailProps> = ({ state }) => {
+const MeterRailComponent: React.FC<MeterRailProps> = ({ state }) => {
   const { meters, batteryCapacityKwh, ledger, sol } = state;
   const doseLimit = getConstantValue('dose_limit_mission_msv', 250);
 
@@ -111,3 +111,5 @@ export const MeterRail: React.FC<MeterRailProps> = ({ state }) => {
     </div>
   );
 };
+
+export const MeterRail = memo(MeterRailComponent);
