@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import type { SimulationState } from '../../lib/sim/types';
 
 interface HabitatCutawayProps {
   state: SimulationState;
 }
 
-export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
+const HabitatCutawayComponent: React.FC<HabitatCutawayProps> = ({ state }) => {
   const packedItems = new Set(state.loadout.itemIds);
   const brownoutLoads = new Set(state.brownoutLoadsShed);
 
-  // Compute dust factor from active effects
+  // Compute dust factor from active effects (0 to 1 continuous scale)
   let dustFactor = 0;
   for (const eff of state.activeEffects) {
     if (eff.target === 'dustFactor' && eff.set !== undefined) {
@@ -19,8 +19,9 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
     }
   }
 
-  // Sky color: interpolate between clear sky and dust sky
-  const skyColor = dustFactor > 0.5 ? 'var(--sky-dust)' : 'var(--sky-clear)';
+  // Continuous sky interpolation using CSS color-mix()
+  const dustPct = Math.round(Math.min(1, Math.max(0, dustFactor)) * 100);
+  const skyTopColor = `color-mix(in srgb, var(--sky-dust) ${dustPct}%, var(--sky-clear))`;
 
   const hasSolarSmall = packedItems.has('solar_small');
   const hasSolarLarge = packedItems.has('solar_large');
@@ -85,9 +86,9 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
           aria-label="Side-section architectural cutaway of Mars outpost modules"
         >
           <defs>
-            {/* Sky gradient */}
+            {/* Sky continuous gradient */}
             <linearGradient id="marsSky" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={skyColor} />
+              <stop offset="0%" stopColor={skyTopColor} />
               <stop offset="100%" stopColor="var(--sky-dust)" />
             </linearGradient>
 
@@ -134,7 +135,7 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               <line x1="25" y1="0" x2="55" y2="0" stroke="var(--ink-dim)" strokeWidth="1.5" />
               {/* Reactor Core Glow */}
               <circle cx="40" cy="42" r="6" fill="var(--oxide)" />
-              <text x="40" y="135" fill="var(--ink-dim)" fontSize="var(--fs-caption)" fontFamily="var(--font-mono)" textAnchor="middle">
+              <text x="40" y="135" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                 KILOPOWER (10kW)
               </text>
             </g>
@@ -153,7 +154,7 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               />
               <line x1="20" y1="25" x2="20" y2="55" stroke="var(--rule)" />
               <line x1="40" y1="20" x2="40" y2="50" stroke="var(--rule)" />
-              <text x="30" y="105" fill="var(--ink-dim)" fontSize="var(--fs-caption)" fontFamily="var(--font-mono)" textAnchor="middle">
+              <text x="30" y="105" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                 SOLAR FARM (12kW)
               </text>
             </g>
@@ -168,7 +169,7 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
                 stroke="var(--ember)"
                 strokeWidth="1.2"
               />
-              <text x="20" y="85" fill="var(--ink-dim)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+              <text x="20" y="85" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                 PV (5kW)
               </text>
             </g>
@@ -180,9 +181,10 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               {/* Geodesic Dome */}
               <path
                 d="M 10 80 A 60 60 0 0 1 130 80 Z"
-                fill={isGreenhouseBrowned ? 'var(--greenhouse-dim)' : 'var(--greenhouse-bg)'}
-                stroke={isGreenhouseBrowned ? 'var(--rule)' : 'var(--sage)'}
-                strokeWidth="1.5"
+                fill={isGreenhouseBrowned ? 'var(--greenhouse-dim)' : 'var(--greenhouse-lit)'}
+                stroke={isGreenhouseBrowned ? 'var(--alarm)' : 'var(--sage)'}
+                strokeWidth={isGreenhouseBrowned ? '2' : '1.5'}
+                strokeDasharray={isGreenhouseBrowned ? '4 2' : 'none'}
                 opacity="0.9"
               />
               {/* Internal Hydroponic Racks & Grow Lights */}
@@ -194,8 +196,8 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
                   <rect x="95" y="65" width="15" height="15" fill="var(--sage)" opacity="0.8" />
                 </>
               )}
-              <text x="70" y="100" fill="var(--ink-dim)" fontSize="var(--fs-caption)" fontFamily="var(--font-mono)" textAnchor="middle">
-                HYDRO BIOSPHERE
+              <text x="70" y="100" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
+                {isGreenhouseBrowned ? '[■ DOME SHED]' : '[● HYDRO BIOSPHERE]'}
               </text>
             </g>
           )}
@@ -219,7 +221,7 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               y="0"
               width="300"
               height="150"
-              rx="4"
+              rx="2"
               fill="var(--hab-outer)"
               stroke="var(--rule)"
               strokeWidth="2"
@@ -233,15 +235,16 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               width="85"
               height="60"
               fill={isRecBrowned ? 'var(--hab-dim)' : 'var(--hab-inner)'}
-              stroke="var(--rule)"
+              stroke={isRecBrowned ? 'var(--alarm)' : 'var(--rule)'}
+              strokeDasharray={isRecBrowned ? '4 2' : 'none'}
               strokeWidth="1"
             />
-            <text x="52" y="32" fill="var(--ink-dim)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+            <text x="52" y="32" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
               CREW HAB
             </text>
             {packedItems.has('rec_module') && (
-              <text x="52" y="48" fill={isRecBrowned ? 'var(--alarm)' : 'var(--ember)'} fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
-                {isRecBrowned ? '[REC SHED]' : '[GYM ACTIVE]'}
+              <text x="52" y="48" fill={isRecBrowned ? 'var(--alarm)' : 'var(--ember)'} fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
+                {isRecBrowned ? '[■ REC SHED]' : '[● GYM ACTIVE]'}
               </text>
             )}
 
@@ -252,15 +255,16 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               width="90"
               height="60"
               fill={isBaseBrownedOut ? 'var(--basalt)' : 'var(--hab-inner)'}
-              stroke="var(--rule)"
+              stroke={isBaseBrownedOut ? 'var(--alarm)' : 'var(--rule)'}
+              strokeDasharray={isBaseBrownedOut ? '4 2' : 'none'}
               strokeWidth="1"
             />
-            <text x="150" y="32" fill="var(--ink)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+            <text x="150" y="32" fill="var(--ink)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
               MISSION OPS
             </text>
             {packedItems.has('medical_kit') && (
-              <text x="150" y="48" fill="var(--sage)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
-                [MED BAY READY]
+              <text x="150" y="48" fill="var(--sage)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
+                [● MED BAY READY]
               </text>
             )}
 
@@ -276,10 +280,10 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
                   stroke="var(--water-border)"
                   strokeWidth="2"
                 />
-                <text x="42" y="30" fill="var(--water-text)" fontSize="var(--fs-micro)" fontFamily="var(--font-condensed)" textAnchor="middle" fontWeight="bold">
+                <text x="42" y="30" fill="var(--water-text)" fontSize="var(--fs-detail)" fontFamily="var(--font-condensed)" textAnchor="middle" fontWeight="bold">
                   STORM SHELTER
                 </text>
-                <text x="42" y="46" fill="var(--water-text)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+                <text x="42" y="46" fill="var(--water-text)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                   WATER WALLS
                 </text>
               </g>
@@ -292,20 +296,21 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               width="185"
               height="60"
               fill={isRecyclerBrowned ? 'var(--basalt)' : 'var(--hab-inner)'}
-              stroke="var(--rule)"
+              stroke={isRecyclerBrowned ? 'var(--alarm)' : 'var(--rule)'}
+              strokeDasharray={isRecyclerBrowned ? '4 2' : 'none'}
               strokeWidth="1"
             />
-            <text x="100" y="98" fill="var(--ink-dim)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+            <text x="100" y="98" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
               ECLSS LIFE SUPPORT SYSTEM
             </text>
             {hasRecycler && (
-              <text x="55" y="118" fill={isRecyclerBrowned ? 'var(--alarm)' : 'var(--sage)'} fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
-                {isRecyclerBrowned ? 'RECYCLER [SHED]' : 'RECYCLER [90%]'}
+              <text x="55" y="118" fill={isRecyclerBrowned ? 'var(--alarm)' : 'var(--sage)'} fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
+                {isRecyclerBrowned ? '[■ RECYCLER SHED]' : '[● RECYCLER 90%]'}
               </text>
             )}
             {hasMoxie && (
-              <text x="145" y="118" fill={isMoxieBrowned ? 'var(--alarm)' : 'var(--ember)'} fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
-                {isMoxieBrowned ? 'MOXIE [SHED]' : 'MOXIE [2.0kg/s]'}
+              <text x="145" y="118" fill={isMoxieBrowned ? 'var(--alarm)' : 'var(--ember)'} fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
+                {isMoxieBrowned ? '[■ MOXIE SHED]' : '[● MOXIE 2.0kg/s]'}
               </text>
             )}
 
@@ -319,16 +324,16 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
               stroke="var(--rule)"
               strokeWidth="1"
             />
-            <text x="247" y="98" fill="var(--ink-dim)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+            <text x="247" y="98" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
               LOGISTICS BAY
             </text>
             {packedItems.has('battery_bank') && (
-              <text x="247" y="115" fill="var(--ember)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+              <text x="247" y="115" fill="var(--ember)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                 BATTERIES [160kWh]
               </text>
             )}
             {packedItems.has('spare_parts_kit') && (
-              <text x="247" y="128" fill="var(--ink)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+              <text x="247" y="128" fill="var(--ink)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
                 3D FAB / SPARES
               </text>
             )}
@@ -338,7 +343,7 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
           <g transform="translate(605, 270)">
             <rect x="0" y="0" width="35" height="50" fill="var(--basalt-2)" stroke="var(--rule)" strokeWidth="1.5" />
             <line x1="17" y1="0" x2="17" y2="50" stroke="var(--rule)" strokeDasharray="2 2" />
-            <text x="17" y="65" fill="var(--ink-dim)" fontSize="var(--fs-micro)" fontFamily="var(--font-mono)" textAnchor="middle">
+            <text x="17" y="65" fill="var(--ink-dim)" fontSize="var(--fs-detail)" fontFamily="var(--font-mono)" textAnchor="middle">
               AIRLOCK
             </text>
           </g>
@@ -364,3 +369,5 @@ export const HabitatCutaway: React.FC<HabitatCutawayProps> = ({ state }) => {
     </div>
   );
 };
+
+export const HabitatCutaway = memo(HabitatCutawayComponent);
