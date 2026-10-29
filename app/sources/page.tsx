@@ -1,9 +1,24 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { SOURCES } from '../../lib/data';
+import { SOURCES, CONSTANTS } from '../../lib/data';
 import { Tag } from '../../components/ui/Tag';
 
 export default function SourcesPage() {
+  const getBadgeVariant = (type?: string) => {
+    switch (type) {
+      case 'MEASURED':
+        return 'nominal';
+      case 'NASA STANDARD':
+        return 'active';
+      case 'DESIGN ASSUMPTION':
+        return 'caution';
+      default:
+        return 'neutral';
+    }
+  };
+
   return (
     <div
       style={{
@@ -49,7 +64,7 @@ export default function SourcesPage() {
               lineHeight: 1,
             }}
           >
-            SOURCES & CITATIONS
+            SOURCES &amp; CITATIONS
           </h1>
         </div>
 
@@ -101,86 +116,156 @@ export default function SourcesPage() {
       </p>
 
       {/* Bibliography Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
-        {SOURCES.map((source) => (
-          <div
-            key={source.id}
-            style={{
-              backgroundColor: 'var(--basalt-2)',
-              border: '1px solid var(--rule)',
-              borderRadius: 'var(--r-1)',
-              padding: 'var(--space-4)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: 'var(--space-2)',
-                }}
-              >
-                <Tag label={source.publisher} variant="nominal" size="sm" />
-                <span
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-8)',
+        }}
+      >
+        {SOURCES.map((source) => {
+          const matchingParams = CONSTANTS.filter((c) => c.sourceId === source.id);
+          const badgeType = source.sourceType || 'NASA STANDARD';
+
+          return (
+            <div
+              key={source.id}
+              style={{
+                backgroundColor: 'var(--basalt-2)',
+                border: '1px solid var(--rule)',
+                borderRadius: 'var(--r-1)',
+                padding: 'var(--space-4)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--fs-detail)',
-                    color: 'var(--ink-dim)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 'var(--space-2)',
+                    marginBottom: 'var(--space-2)',
                   }}
                 >
-                  Verified {source.accessedOn}
-                </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <Tag
+                      label={badgeType}
+                      variant={getBadgeVariant(badgeType)}
+                      size="sm"
+                    />
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-condensed)',
+                        fontSize: 'var(--fs-label)',
+                        color: 'var(--ink-dim)',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {source.publisher}
+                    </span>
+                  </div>
+
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 'var(--fs-detail)',
+                      color: 'var(--ink-dim)',
+                    }}
+                  >
+                    Verified {source.accessedOn}
+                  </span>
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: 'var(--font-condensed)',
+                    fontSize: 'var(--fs-lead)',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    margin: '0 0 var(--space-2) 0',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {source.title}
+                </h2>
+
+                <p
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--fs-label)',
+                    color: 'var(--ink-dim)',
+                    lineHeight: 1.4,
+                    margin: '0 0 var(--space-3) 0',
+                  }}
+                >
+                  <strong style={{ color: 'var(--ember)' }}>Used in Simulation: </strong>
+                  {source.usedFor}
+                </p>
+
+                {/* Used in parameter link chips */}
+                {matchingParams.length > 0 && (
+                  <div style={{ marginBottom: 'var(--space-3)' }}>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontFamily: 'var(--font-condensed)',
+                        fontSize: 'var(--fs-detail)',
+                        color: 'var(--ink-dim)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      Linked Model Parameters:
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)' }}>
+                      {matchingParams.map((p) => (
+                        <Link
+                          key={p.id}
+                          href={`/how-it-works#param-${p.id}`}
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 'var(--fs-detail)',
+                            padding: '2px 6px',
+                            backgroundColor: 'var(--basalt)',
+                            border: '1px solid var(--rule)',
+                            color: 'var(--ember)',
+                            textDecoration: 'none',
+                            borderRadius: 'var(--r-0)',
+                          }}
+                        >
+                          {p.id} &rarr;
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <h2
-                style={{
-                  fontFamily: 'var(--font-condensed)',
-                  fontSize: 'var(--fs-lead)',
-                  fontWeight: 600,
-                  color: 'var(--ink)',
-                  margin: '0 0 var(--space-2) 0',
-                  lineHeight: 1.3,
-                }}
-              >
-                {source.title}
-              </h2>
-
-              <p
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-label)',
-                  color: 'var(--ink-dim)',
-                  lineHeight: 1.4,
-                  margin: '0 0 var(--space-3) 0',
-                }}
-              >
-                <strong style={{ color: 'var(--ember)' }}>Used in Simulation: </strong>
-                {source.usedFor}
-              </p>
+              <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 'var(--space-2)' }}>
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--fs-label)',
+                    color: 'var(--oxide)',
+                    textDecoration: 'none',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {source.url} &rarr;
+                </a>
+              </div>
             </div>
-
-            <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 'var(--space-2)' }}>
-              <a
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-label)',
-                  color: 'var(--oxide)',
-                  textDecoration: 'none',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {source.url} &rarr;
-              </a>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
