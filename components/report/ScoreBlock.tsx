@@ -19,6 +19,7 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ score, maxSols, endSol }
   };
 
   const gradeColor = gradeColors[score.grade] || 'var(--ink)';
+  const isSurviving = endSol >= maxSols;
 
   return (
     <div
@@ -53,23 +54,28 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ score, maxSols, endSol }
         >
           NASA FLIGHT CERTIFICATION // EVALUATION
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)' }}>
+        <span
+          className="tabular-nums"
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)' }}
+        >
           {endSol} / {maxSols} SOLS
         </span>
       </div>
 
-      {/* Grade & Total Points */}
+      {/* Grade & Total Points with Sub-label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
         <div
           style={{
-            width: '80px',
-            height: '80px',
+            width: '90px',
+            height: '90px',
             backgroundColor: 'var(--basalt)',
             border: `2px solid ${gradeColor}`,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            borderRadius: 'var(--r-1)',
           }}
         >
           <span
@@ -83,11 +89,24 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ score, maxSols, endSol }
           >
             {score.grade}
           </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-detail)',
+              fontWeight: 700,
+              color: isSurviving ? 'var(--sage)' : 'var(--alarm)',
+              textTransform: 'uppercase',
+              marginTop: '2px',
+            }}
+          >
+            {isSurviving ? 'SURVIVED' : `SOL ${endSol}`}
+          </span>
         </div>
 
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
             <span
+              className="tabular-nums"
               style={{
                 fontFamily: 'var(--font-condensed)',
                 fontSize: 'var(--fs-numeral)',
@@ -108,6 +127,21 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ score, maxSols, endSol }
               / 100 POINTS
             </span>
           </div>
+
+          <div
+            style={{
+              fontFamily: 'var(--font-condensed)',
+              fontSize: 'var(--fs-lead)',
+              color: isSurviving ? 'var(--sage)' : 'var(--alarm)',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              margin: '2px 0',
+            }}
+          >
+            {isSurviving ? 'MISSION SURVIVED TO COMPLETION' : `MISSION TERMINATED ON SOL ${endSol}`}
+          </div>
+
           <p
             style={{
               fontFamily: 'var(--font-mono)',
@@ -122,35 +156,100 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ score, maxSols, endSol }
         </div>
       </div>
 
-      {/* 4 Pillars Breakdown */}
+      {/* 4 Pillars Breakdown as Aligned Numeric Rows with Tabular Numerals */}
       <div
+        className="tabular-nums"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
+          borderTop: '1px solid var(--rule)',
+          paddingTop: 'var(--space-3)',
+          display: 'flex',
+          flexDirection: 'column',
           gap: 'var(--space-2)',
           fontFamily: 'var(--font-mono)',
           fontSize: 'var(--fs-label)',
         }}
       >
-        <div style={{ backgroundColor: 'var(--basalt)', padding: 'var(--space-2)', border: '1px solid var(--rule)' }}>
-          <span style={{ color: 'var(--ink-dim)', display: 'block' }}>CREW HEALTH</span>
-          <strong style={{ color: 'var(--ink)' }}>{score.healthScore} / 25 pts</strong>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--ink)' }}>
+            CREW HEALTH &amp; PHYSIOLOGY{' '}
+            <span style={{ fontSize: 'var(--fs-detail)', color: 'var(--ink-dim)' }}>
+              {score.healthScore >= 20 ? '[NOMINAL]' : score.healthScore >= 12 ? '[DEGRADED]' : '[CRITICAL]'}
+            </span>
+          </span>
+          <span
+            style={{
+              fontWeight: 600,
+              color: score.healthScore >= 20 ? 'var(--sage)' : score.healthScore >= 12 ? 'var(--caution)' : 'var(--alarm)',
+            }}
+          >
+            {score.healthScore.toString().padStart(2, ' ')} / 25 PTS
+          </span>
         </div>
 
-        <div style={{ backgroundColor: 'var(--basalt)', padding: 'var(--space-2)', border: '1px solid var(--rule)' }}>
-          <span style={{ color: 'var(--ink-dim)', display: 'block' }}>RADIATION MARGIN</span>
-          <strong style={{ color: 'var(--ink)' }}>{score.doseMarginScore} / 25 pts</strong>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--ink)' }}>
+            RADIATION DOSE MARGIN{' '}
+            <span style={{ fontSize: 'var(--fs-detail)', color: 'var(--ink-dim)' }}>
+              {score.doseMarginScore >= 20 ? '[NOMINAL]' : score.doseMarginScore >= 12 ? '[ELEVATED]' : '[LETHAL]'}
+            </span>
+          </span>
+          <span
+            style={{
+              fontWeight: 600,
+              color: score.doseMarginScore >= 20 ? 'var(--sage)' : score.doseMarginScore >= 12 ? 'var(--caution)' : 'var(--alarm)',
+            }}
+          >
+            {score.doseMarginScore.toString().padStart(2, ' ')} / 25 PTS
+          </span>
         </div>
 
-        <div style={{ backgroundColor: 'var(--basalt)', padding: 'var(--space-2)', border: '1px solid var(--rule)' }}>
-          <span style={{ color: 'var(--ink-dim)', display: 'block' }}>RESERVES SURPLUS</span>
-          <strong style={{ color: 'var(--ink)' }}>{score.reservesScore} / 25 pts</strong>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--ink)' }}>
+            CONSUMABLES RESERVES BUFFER{' '}
+            <span style={{ fontSize: 'var(--fs-detail)', color: 'var(--ink-dim)' }}>
+              {score.reservesScore >= 20 ? '[SURPLUS]' : score.reservesScore >= 12 ? '[TIGHT]' : '[DEPLETED]'}
+            </span>
+          </span>
+          <span
+            style={{
+              fontWeight: 600,
+              color: score.reservesScore >= 20 ? 'var(--sage)' : score.reservesScore >= 12 ? 'var(--caution)' : 'var(--alarm)',
+            }}
+          >
+            {score.reservesScore.toString().padStart(2, ' ')} / 25 PTS
+          </span>
         </div>
 
-        <div style={{ backgroundColor: 'var(--basalt)', padding: 'var(--space-2)', border: '1px solid var(--rule)' }}>
-          <span style={{ color: 'var(--ink-dim)', display: 'block' }}>MASS EFFICIENCY</span>
-          <strong style={{ color: 'var(--ink)' }}>{score.massEfficiencyScore} / 25 pts</strong>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--ink)' }}>
+            MASS &amp; PAYLOAD EFFICIENCY{' '}
+            <span style={{ fontSize: 'var(--fs-detail)', color: 'var(--ink-dim)' }}>
+              {score.massEfficiencyScore >= 22 ? '[OPTIMAL]' : score.massEfficiencyScore >= 18 ? '[STANDARD]' : '[PENALIZED]'}
+            </span>
+          </span>
+          <span
+            style={{
+              fontWeight: 600,
+              color: score.massEfficiencyScore >= 20 ? 'var(--sage)' : 'var(--caution)',
+            }}
+          >
+            {score.massEfficiencyScore.toString().padStart(2, ' ')} / 25 PTS
+          </span>
         </div>
+
+        {score.survivalBonus < 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: 'var(--alarm)' }}>
+              EMERGENCY RESUPPLY PENALTY{' '}
+              <span style={{ fontSize: 'var(--fs-detail)', color: 'var(--alarm)' }}>
+                [EXTERNAL ASSIST]
+              </span>
+            </span>
+            <span style={{ fontWeight: 600, color: 'var(--alarm)' }}>
+              {score.survivalBonus} PTS
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
