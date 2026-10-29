@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
 
@@ -13,7 +13,7 @@ interface SolClockProps {
   onSkipToEvent: () => void;
 }
 
-export const SolClock: React.FC<SolClockProps> = ({
+const SolClockComponent: React.FC<SolClockProps> = ({
   currentSol,
   maxSols,
   speed,
@@ -54,6 +54,7 @@ export const SolClock: React.FC<SolClockProps> = ({
           </span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
             <span
+              className="tabular-nums"
               style={{
                 fontFamily: 'var(--font-condensed)',
                 fontSize: 'var(--fs-numeral)',
@@ -65,6 +66,7 @@ export const SolClock: React.FC<SolClockProps> = ({
               SOL {String(currentSol).padStart(3, '0')}
             </span>
             <span
+              className="tabular-nums"
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-body)',
@@ -80,7 +82,7 @@ export const SolClock: React.FC<SolClockProps> = ({
         <div style={{ flex: 1, minWidth: '100px' }}>
           <div
             style={{
-              height: '4px',
+              height: '6px',
               backgroundColor: 'var(--basalt)',
               border: '1px solid var(--rule)',
               borderRadius: 'var(--r-0)',
@@ -92,14 +94,15 @@ export const SolClock: React.FC<SolClockProps> = ({
                 width: `${percentage}%`,
                 height: '100%',
                 backgroundColor: 'var(--ember)',
-                transition: 'width 0.2s ease',
+                transition: 'width 0.1s linear',
               }}
             />
           </div>
           <span
+            className="tabular-nums"
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-caption)',
+              fontSize: 'var(--fs-detail)',
               color: 'var(--ink-dim)',
               display: 'block',
               marginTop: '2px',
@@ -111,55 +114,130 @@ export const SolClock: React.FC<SolClockProps> = ({
         </div>
       </div>
 
-      {/* Speed Controls (Pause, 1x, 4x, 16x, Skip) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-        <Button
-          variant={speed === 0 ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => onSetSpeed(0)}
-          title="Pause simulation (Spacebar)"
-          aria-label="Pause simulation"
+      {/* Speed Controls (Radio Group Semantics + Keyboard Hint) */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+        <div
+          role="radiogroup"
+          aria-label="Simulation warp speed"
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}
         >
-          <Icon name="pause" size={14} /> 0x
-        </Button>
-        <Button
-          variant={speed === 1 ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => onSetSpeed(1)}
-          title="Standard speed (1 Sol / sec)"
-          aria-label="1x speed"
+          <button
+            type="button"
+            role="radio"
+            aria-checked={speed === 0}
+            onClick={() => onSetSpeed(0)}
+            title="Pause simulation [Space]"
+            aria-label="Pause simulation (0x speed)"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-label)',
+              padding: 'var(--space-1) var(--space-2)',
+              border: `1px solid ${speed === 0 ? 'var(--ember)' : 'var(--rule)'}`,
+              backgroundColor: speed === 0 ? 'var(--ember)' : 'transparent',
+              color: speed === 0 ? 'var(--basalt)' : 'var(--ink)',
+              fontWeight: speed === 0 ? 700 : 500,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <Icon name="pause" size={14} /> 0x
+          </button>
+
+          <button
+            type="button"
+            role="radio"
+            aria-checked={speed === 1}
+            onClick={() => onSetSpeed(1)}
+            title="Standard speed (1 Sol / sec) [1]"
+            aria-label="1x standard speed"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-label)',
+              padding: 'var(--space-1) var(--space-2)',
+              border: `1px solid ${speed === 1 ? 'var(--ember)' : 'var(--rule)'}`,
+              backgroundColor: speed === 1 ? 'var(--ember)' : 'transparent',
+              color: speed === 1 ? 'var(--basalt)' : 'var(--ink)',
+              fontWeight: speed === 1 ? 700 : 500,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            1x
+          </button>
+
+          <button
+            type="button"
+            role="radio"
+            aria-checked={speed === 4}
+            onClick={() => onSetSpeed(4)}
+            title="Fast forward (4 Sols / sec) [2]"
+            aria-label="4x fast speed"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-label)',
+              padding: 'var(--space-1) var(--space-2)',
+              border: `1px solid ${speed === 4 ? 'var(--ember)' : 'var(--rule)'}`,
+              backgroundColor: speed === 4 ? 'var(--ember)' : 'transparent',
+              color: speed === 4 ? 'var(--basalt)' : 'var(--ink)',
+              fontWeight: speed === 4 ? 700 : 500,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            4x
+          </button>
+
+          <button
+            type="button"
+            role="radio"
+            aria-checked={speed === 16}
+            onClick={() => onSetSpeed(16)}
+            title="Ultra speed (16 Sols / sec) [3]"
+            aria-label="16x warp speed"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-label)',
+              padding: 'var(--space-1) var(--space-2)',
+              border: `1px solid ${speed === 16 ? 'var(--ember)' : 'var(--rule)'}`,
+              backgroundColor: speed === 16 ? 'var(--ember)' : 'transparent',
+              color: speed === 16 ? 'var(--basalt)' : 'var(--ink)',
+              fontWeight: speed === 16 ? 700 : 500,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            16x
+          </button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={isPausedForEvent}
+            onClick={onSkipToEvent}
+            title="Skip to next event or incident [E]"
+            aria-label="Skip to next event"
+          >
+            <Icon name="fast_forward" size={14} /> Next Event
+          </Button>
+        </div>
+
+        {/* Keyboard shortcut hint banner */}
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--fs-detail)',
+            color: 'var(--ink-dim)',
+            letterSpacing: '0.04em',
+          }}
         >
-          1x
-        </Button>
-        <Button
-          variant={speed === 4 ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => onSetSpeed(4)}
-          title="Fast forward (4 Sols / sec)"
-          aria-label="4x speed"
-        >
-          4x
-        </Button>
-        <Button
-          variant={speed === 16 ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => onSetSpeed(16)}
-          title="Ultra speed (16 Sols / sec)"
-          aria-label="16x speed"
-        >
-          16x
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={isPausedForEvent}
-          onClick={onSkipToEvent}
-          title="Fast forward until next event incident or mission completion"
-          aria-label="Skip to next event"
-        >
-          <Icon name="fast_forward" size={14} /> Next Event
-        </Button>
+          KEYS: [SPACE] PAUSE | [1] 1X | [2] 4X | [3] 16X | [E] EVENT
+        </div>
       </div>
     </div>
   );
 };
+
+export const SolClock = memo(SolClockComponent);
