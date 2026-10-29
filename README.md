@@ -7,7 +7,7 @@
 [![Simulation Balance](https://img.shields.io/badge/balance-57%25%20win%20rate%20(target%2055--75%25)-F0A24B?style=flat-square)](scripts/run-balance.ts)
 [![Payload Mass Budget](https://img.shields.io/badge/payload%20limit-40%2C000%20kg-D9622B?style=flat-square)](data/constants.json)
 [![TypeScript Strict](https://img.shields.io/badge/typescript-strict%20100%25-3178C6?style=flat-square&logo=typescript)](tsconfig.json)
-[![Next.js 16](https://img.shields.io/badge/next.js-16.4.0%20(turbopack)-black?style=flat-square&logo=next.js)](package.json)
+[![Next.js 16](https://img.shields.io/badge/next.js-16.4.3%20(turbopack)-black?style=flat-square&logo=next.js)](package.json)
 [![Tailwind CSS v4](https://img.shields.io/badge/tailwind-v4%20tokens-38B2AC?style=flat-square&logo=tailwindcss)](styles/tokens.css)
 [![Zero External Media](https://img.shields.io/badge/assets-100%25%20code%20generated-E9C46A?style=flat-square)](lib/sound.ts)
 
