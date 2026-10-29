@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '../components/ui/Button';
 import { Tag } from '../components/ui/Tag';
-import { Icon } from '../components/ui/Icon';
 
 interface SpaceWeatherData {
   level: 'quiet' | 'active' | 'storm';
@@ -24,21 +23,34 @@ interface SpaceWeatherData {
     source: string;
   };
   offline: boolean;
+  cached?: boolean;
 }
 
 export default function LandingPage() {
   const [sliderTonnage, setSliderTonnage] = useState(24);
   const [spaceWeather, setSpaceWeather] = useState<SpaceWeatherData | null>(null);
+  const [telemetryStatus, setTelemetryStatus] = useState<'loading' | 'live' | 'stale' | 'offline'>('loading');
 
   useEffect(() => {
     fetch('/api/space-weather')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && !data.offline) {
-          setSpaceWeather(data);
+        if (!data) {
+          setTelemetryStatus('offline');
+          return;
+        }
+        setSpaceWeather(data);
+        if (data.offline) {
+          setTelemetryStatus('offline');
+        } else if (data.cached) {
+          setTelemetryStatus('stale');
+        } else {
+          setTelemetryStatus('live');
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setTelemetryStatus('offline');
+      });
   }, []);
 
   const maxTonnes = 40;
@@ -102,9 +114,21 @@ export default function LandingPage() {
           </span>
         </div>
 
-        {/* Live NASA & NOAA Telemetry Badges */}
+        {/* Live NASA & NOAA Telemetry Badges with Layout-Stable Fallback */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-          {spaceWeather && (
+          {telemetryStatus === 'loading' ? (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-detail)',
+                color: 'var(--ink-dim)',
+                padding: 'var(--space-1) var(--space-2)',
+                border: '1px solid var(--rule)',
+              }}
+            >
+              [SYNCING DEEP SPACE TELEMETRY...]
+            </div>
+          ) : spaceWeather && !spaceWeather.offline ? (
             <>
               <div
                 style={{
@@ -125,7 +149,7 @@ export default function LandingPage() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Space Weather (NOAA SWPC):
+                  Space Weather (NOAA):
                 </span>
                 <Tag
                   label={`Kp ${spaceWeather.kIndex} // ${spaceWeather.level.toUpperCase()}`}
@@ -154,7 +178,7 @@ export default function LandingPage() {
                       textTransform: 'uppercase',
                     }}
                   >
-                    Mars Comms Lag (JPL Horizons):
+                    Mars Comms Lag (JPL):
                   </span>
                   <Tag
                     label={`${spaceWeather.marsEphemeris.signalDelayFormatted} (${spaceWeather.marsEphemeris.distMillionKm}M km)`}
@@ -164,6 +188,18 @@ export default function LandingPage() {
                 </div>
               )}
             </>
+          ) : (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-detail)',
+                color: 'var(--ink-dim)',
+                padding: 'var(--space-1) var(--space-2)',
+                border: '1px solid var(--rule)',
+              }}
+            >
+              [OFFLINE TELEMETRY // MARS MODEL ACTIVE]
+            </div>
           )}
 
           <nav style={{ display: 'flex', gap: 'var(--space-3)' }}>
@@ -197,7 +233,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Main Hero Section: Headline + Interactive Mass Bar Demo */}
+      {/* Main Hero Section: Left-Aligned, Type-Driven, Single CTA Above Fold */}
       <main style={{ marginBottom: 'var(--space-10)' }}>
         <div
           style={{
@@ -251,6 +287,7 @@ export default function LandingPage() {
               that determine whether an outpost suffocates, freezes, or survives.
             </p>
 
+            {/* Single Primary CTA Above Fold */}
             <Link href="/pack" style={{ textDecoration: 'none' }}>
               <Button variant="primary" size="lg">
                 BEGIN MISSION MANIFEST &rarr;
@@ -293,15 +330,27 @@ export default function LandingPage() {
                   fontSize: 'var(--fs-label)',
                   color: isOver ? 'var(--alarm)' : 'var(--sage)',
                   fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
-                {isOver ? 'OVER 40-TONNE LIMIT' : `SUSTAINS ~${estimatedCrewSupported} CREW (180 SOLS)`}
+                {isOver ? (
+                  <>
+                    <span aria-hidden="true">▲</span> OVER 40-TONNE LIMIT
+                  </>
+                ) : (
+                  <>
+                    <span aria-hidden="true">■</span> SUSTAINS ~{estimatedCrewSupported} CREW (180 SOLS)
+                  </>
+                )}
               </span>
             </div>
 
             <div style={{ marginBottom: 'var(--space-4)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
                 <span
+                  className="tabular-nums"
                   style={{
                     fontFamily: 'var(--font-condensed)',
                     fontSize: 'var(--fs-numeral)',
@@ -313,6 +362,7 @@ export default function LandingPage() {
                   {sliderTonnage.toFixed(1)} T
                 </span>
                 <span
+                  className="tabular-nums"
                   style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: 'var(--fs-body)',
@@ -324,10 +374,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Mass Bar */}
+            {/* Mass Bar with Hatching Overlay when Over */}
             <div
               style={{
-                height: '16px',
+                height: '18px',
                 width: '100%',
                 backgroundColor: 'var(--basalt)',
                 border: `1px solid ${isOver ? 'var(--alarm)' : 'var(--rule)'}`,
@@ -346,39 +396,52 @@ export default function LandingPage() {
               />
             </div>
 
-            {/* Slider */}
+            {/* Accessible Native Range Slider with Throttled Live Announcement */}
             <input
+              id="landing-cargo-slider"
               type="range"
               min={5}
               max={55}
               step={1}
               value={sliderTonnage}
               onChange={(e) => setSliderTonnage(Number(e.target.value))}
+              aria-label="Experimental lander cargo budget simulator"
+              aria-valuemin={5}
+              aria-valuemax={55}
+              aria-valuenow={sliderTonnage}
+              aria-valuetext={`${sliderTonnage} tonnes. ${isOver ? 'Exceeds budget by ' + (sliderTonnage - 40).toFixed(1) + ' tonnes' : (40 - sliderTonnage).toFixed(1) + ' tonnes cargo margin remaining'}`}
               style={{
                 width: '100%',
-                accentColor: 'var(--ember)',
+                accentColor: isOver ? 'var(--alarm)' : 'var(--ember)',
                 cursor: 'pointer',
                 marginBottom: 'var(--space-3)',
               }}
             />
 
+            {/* Screen Reader Live Region */}
+            <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+              {isOver
+                ? `Lander mass is ${sliderTonnage} tonnes, exceeding the 40-tonne limit by ${(sliderTonnage - 40).toFixed(1)} tonnes.`
+                : `Lander mass is ${sliderTonnage} tonnes with ${(40 - sliderTonnage).toFixed(1)} tonnes remaining.`}
+            </div>
+
             <span
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-label)',
-                color: 'var(--ink-dim)',
+                color: isOver ? 'var(--alarm)' : 'var(--ink-dim)',
                 lineHeight: 1.4,
                 display: 'block',
               }}
             >
               {isOver
-                ? 'Your rocket payload has exceeded the 40-tonne delivery envelope. Launch is automatically locked by orbital flight dynamics.'
+                ? '▲ Your rocket payload has exceeded the 40-tonne delivery envelope. Launch is automatically locked by orbital flight dynamics.'
                 : `At ${sliderTonnage} tonnes, your lander has ${(40 - sliderTonnage).toFixed(1)} tonnes remaining for radiation shielding berms, storm shelters, and spare parts.`}
             </span>
           </div>
         </div>
 
-        {/* Three-Step Strip Drawn as Numbered Log Entries (Not generic icon cards) */}
+        {/* Three-Step Strip Drawn as Equal-Height Numbered Log Entries */}
         <section>
           <div
             style={{
@@ -410,80 +473,110 @@ export default function LandingPage() {
           >
             {/* Entry 01 */}
             <div
+              tabIndex={0}
+              role="region"
+              aria-label="Mission Phase 1: Payload Manifest"
               style={{
                 backgroundColor: 'var(--basalt)',
                 border: '1px solid var(--rule)',
                 borderRadius: 'var(--r-1)',
                 padding: 'var(--space-4)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '180px',
+                outline: 'none',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
-                  LOG ENTRY 01
-                </span>
-                <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
-                  PAYLOAD MANIFEST
-                </span>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
+                    LOG ENTRY 01
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
+                    PAYLOAD MANIFEST
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
+                  Pack the 40-Tonne Lander
+                </h3>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
+                  Choose between solar panels and Kilopower fission. Allocate scarce cargo mass between closed-loop ECLSS recyclers,
+                  MOXIE oxygen generators, regolith radiation berms, and shelf-stable rations.
+                </p>
               </div>
-              <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
-                Pack the 40-Tonne Lander
-              </h3>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
-                Choose between solar panels and Kilopower fission. Allocate scarce cargo mass between closed-loop ECLSS recyclers,
-                MOXIE oxygen generators, regolith radiation berms, and shelf-stable rations.
-              </p>
             </div>
 
             {/* Entry 02 */}
             <div
+              tabIndex={0}
+              role="region"
+              aria-label="Mission Phase 2: Surface Operations"
               style={{
                 backgroundColor: 'var(--basalt)',
                 border: '1px solid var(--rule)',
                 borderRadius: 'var(--r-1)',
                 padding: 'var(--space-4)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '180px',
+                outline: 'none',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
-                  LOG ENTRY 02
-                </span>
-                <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
-                  SURFACE OPERATIONS
-                </span>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
+                    LOG ENTRY 02
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
+                    SURFACE OPERATIONS
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
+                  Survive Sol by Sol
+                </h3>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
+                  The lander touches down on Mars. Random seeded event cards pause the mission—dust storms choke solar output,
+                  solar particle events bombard the hull, and coolant lines leak. Your packed hardware unlocks vital countermeasures.
+                </p>
               </div>
-              <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
-                Survive Sol by Sol
-              </h3>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
-                The lander touches down on Mars. Random seeded event cards pause the mission—dust storms choke solar output,
-                solar particle events bombard the hull, and coolant lines leak. Your packed hardware unlocks vital countermeasures.
-              </p>
             </div>
 
             {/* Entry 03 */}
             <div
+              tabIndex={0}
+              role="region"
+              aria-label="Mission Phase 3: Failure Postmortem"
               style={{
                 backgroundColor: 'var(--basalt)',
                 border: '1px solid var(--rule)',
                 borderRadius: 'var(--r-1)',
                 padding: 'var(--space-4)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '180px',
+                outline: 'none',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
-                  LOG ENTRY 03
-                </span>
-                <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
-                  FAILURE POSTMORTEM
-                </span>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ember)', fontWeight: 700 }}>
+                    LOG ENTRY 03
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', textTransform: 'uppercase' }}>
+                    FAILURE POSTMORTEM
+                  </span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
+                  Learn From the Cause Chain
+                </h3>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
+                  Every mission ends with an exact backward cause-chain trace from the telemetry ledger. Trace how a dust storm drained
+                  batteries, which shed the water recycler, which caused dehydration 8 sols later. Iterate and launch again.
+                </p>
               </div>
-              <h3 style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-lead)', color: 'var(--ink)', margin: '0 0 var(--space-2) 0' }}>
-                Learn From the Cause Chain
-              </h3>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)', lineHeight: 1.5, margin: 0 }}>
-                Every mission ends with an exact backward cause-chain trace from the telemetry ledger. Trace how a dust storm drained
-                batteries, which shed the water recycler, which caused dehydration 8 sols later. Iterate and launch again.
-              </p>
             </div>
           </div>
         </section>
