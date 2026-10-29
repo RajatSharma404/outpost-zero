@@ -23,7 +23,7 @@
 7. [Pure Simulation Engine Architecture](#7-pure-simulation-engine-architecture)
 8. [Automated 200-Seed Monte Carlo Balance Benchmark](#8-automated-200-seed-monte-carlo-balance-benchmark)
 9. [Scoring Matrix & Backward Causal Attribution](#9-scoring-matrix--backward-causal-attribution)
-10. [AI Flight Surgeon & Live Space Weather API](#10-ai-flight-surgeon--live-space-weather-api)
+10. [Unified NASA Telemetry Gateway & AI Flight Surgeon](#10-unified-nasa-telemetry-gateway--ai-flight-surgeon)
 11. [User Interface & Visual Design Architecture](#11-user-interface--visual-design-architecture)
 12. [STEM Educator Guide & Classroom Lesson Plan](#12-stem-educator-guide--classroom-lesson-plan)
 13. [Project Structure & File Organization](#13-project-structure--file-organization)
@@ -366,13 +366,30 @@ graph RL
 
 ---
 
-## 10. AI Flight Surgeon & Live Space Weather API
+## 10. Unified NASA Telemetry Gateway & AI Flight Surgeon
 
-### Live NOAA Space Weather Proxy (`GET /api/space-weather`)
-Connects to the **NOAA Space Weather Prediction Center** (Planetary K-index 1-minute observational feed).
-- If a geomagnetic storm ($K_p \ge 5$) is currently raging in Earth's magnetosphere, the game alerts players with a live telemetry warning and dynamically models space weather conditions on Mars.
-- **Edge Caching:** Cached with `s-maxage=600, stale-while-revalidate=1200` to prevent rate limiting NOAA servers.
-- **Graceful Fallback:** If NOAA is unreachable, automatically falls back to quiet solar baseline telemetry with zero errors.
+### Unified Aerospace Telemetry Gateway (`GET /api/space-weather`)
+Outpost Zero operates a resilient, server-side **Aerospace Telemetry Gateway** ([`app/api/space-weather/route.ts`](app/api/space-weather/route.ts)) that aggregates real-time observational data directly from NASA and NOAA scientific systems:
+
+1. **NASA / JPL Horizons Planetary Ephemeris API:**
+   - Real-time orbital calculation for Mars (`COMMAND='499'`) observed from Earth (`CENTER='500@399'`).
+   - Extracts live true distance ($\Delta$ in AU and millions of km) and exact **1-way light-time communications delay** ($\tau_{LT}$ in minutes and seconds).
+   - Dynamically reflects Mars orbital mechanics (varying from 54.6 million km / 3.1 min light time at perihelic opposition to 401 million km / 22.3 min light time at conjunction).
+
+2. **NASA DONKI (Space Weather Database Of Notifications, Knowledge, and Information):**
+   - Monitors active Coronal Mass Ejections (`/DONKI/CME`) and Solar Energetic Particle events (`/DONKI/SEP`) emitted by the Sun over rolling 7-day windows.
+   - Detects active interplanetary radiation storms that pose direct threats to astronaut EVA operations.
+
+3. **NOAA Space Weather Prediction Center (SWPC):**
+   - Fetches live 1-minute observational Planetary K-index ($K_p \in [0, 9]$).
+   - Categorizes space weather into normalized operational thresholds: `quiet` ($K_p < 4$), `active` ($K_p = 4$), or `storm` ($K_p \ge 5$).
+
+4. **Mars Surface Meteorology Baseline (MSL Curiosity & InSight):**
+   - Injects real ground station surface measurements: nominal temperature ($T_{ambient} \approx -63^\circ\text{C}$), atmospheric pressure ($P \approx 720\text{ Pa}$), and dust optical depth ($\tau \approx 0.5$).
+
+**Edge Resilience & Rate-Limit Shield:**
+- Uses Next.js **ISR Edge Caching (`revalidate = 600`)** with `s-maxage=600, stale-while-revalidate=1200`. Even if thousands of students play simultaneously in a classroom, only 1 request every 10 minutes reaches NASA servers, completely eliminating rate-limiting bans.
+- All requests run in parallel with strict 3.5s timeouts and seamless deterministic fallbacks, ensuring zero gameplay disruption if external endpoints encounter service interruptions.
 
 ### Gemini 2.5 Flash AI Flight Surgeon (`POST /api/mentor`)
 At mission completion, players can submit their telemetry to the **Gemini 2.5 Flash AI Flight Surgeon** ([`app/api/mentor/route.ts`](app/api/mentor/route.ts)).
@@ -409,7 +426,7 @@ Outpost Zero enforces a strict design token architecture ([`styles/tokens.css`](
 #### 1. Mission Briefing Landing Screen (`/`)
 - Oversized headline banner with Barlow Condensed typography.
 - Interactive live mass bar demonstration slider.
-- Live NOAA space weather status badge.
+- Live dual telemetry badges: **NOAA SWPC Space Weather** (Planetary K-index) and **NASA/JPL Horizons Mars Comms Delay** (live range in million km & 1-way light time).
 - Numbered engineering log entries explaining the physics of the mission.
 
 #### 2. Cargo Manifest & Lander Loading Screen (`/pack`)
@@ -420,6 +437,7 @@ Outpost Zero enforces a strict design token architecture ([`styles/tokens.css`](
 - Launch locking: Launch button disabled if total mass exceeds 40,000 kg.
 
 #### 3. Live Mission Control Simulation Screen (`/mission`)
+- **Live NASA Deep Space Telemetry Ribbon:** Real-time banner streaming live Earth-Mars range (million km), speed-of-light 1-way signal latency (minutes/seconds), and NOAA geomagnetic activity level.
 - **Habitat Cutaway (Hand-Crafted SVG):** Dynamic cross-section of the outpost showing crew quarters, greenhouse, ECLSS recycler, and nuclear core. Sky background color dynamically interpolates between clear sky (`#C98B63`) and dense dust storm (`#7A4A32`) based on optical depth $\tau$.
 - **Sol Clock:** Simulation speed controls (`0x` Pause, `1x` Normal, `4x` Fast, `16x` Warp, `Skip to Event`).
 - **Telemetry Meter Rail:** Real-time gauges for Oxygen, Water, Food, Power, Radiation, Health, and Morale. Hovering or focusing any meter reveals an instant breakdown of the last sol's net delta and causal contributors.
