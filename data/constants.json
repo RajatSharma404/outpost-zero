@@ -7,7 +7,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Verified against NASA BVAD metabolic rate table (NASA/TP-2015-218570)."
+    "note": "Verified against NASA BVAD metabolic rate table (NASA/TP-2015-218570).",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "water_per_crew_per_sol_kg",
@@ -17,7 +18,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Baseline for drinking, food preparation, and personal hygiene."
+    "note": "Baseline for drinking, food preparation, and personal hygiene.",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "food_dry_per_crew_per_sol_kg",
@@ -27,7 +29,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Dehydrated shelf-stable rations meeting complete nutritional guidelines."
+    "note": "Dehydrated shelf-stable rations meeting complete nutritional guidelines.",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "food_kcal_per_crew_per_sol",
@@ -37,7 +40,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Metabolic daily energy requirement under surface operations."
+    "note": "Metabolic daily energy requirement under surface operations.",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "mars_radiation_msv_per_sol",
@@ -47,7 +51,8 @@
     "sourceId": "curiosity_rad",
     "verified": true,
     "gameScale": 1,
-    "note": "Verified with Curiosity MSL RAD surface measurement average."
+    "note": "Verified with Curiosity MSL RAD surface measurement average.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "solar_flux_mars_w_m2",
@@ -57,7 +62,8 @@
     "sourceId": "mars_fact_sheet",
     "verified": true,
     "gameScale": 1,
-    "note": "Mars Fact Sheet mean insolation at top of atmosphere scaled for surface."
+    "note": "Mars Fact Sheet mean insolation at top of atmosphere scaled for surface.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "sol_length_hours",
@@ -67,7 +73,8 @@
     "sourceId": "mars_fact_sheet",
     "verified": true,
     "gameScale": 1,
-    "note": "24 hours 39 minutes 35 seconds per sol."
+    "note": "24 hours 39 minutes 35 seconds per sol.",
+    "sourceType": "MEASURED"
   },
   {
     "id": "dose_limit_mission_msv",
@@ -77,7 +84,8 @@
     "sourceId": "nasa_std_3001",
     "verified": true,
     "gameScale": 1,
-    "note": "NASA-STD-3001 health standard design reference mission threshold."
+    "note": "NASA-STD-3001 health standard design reference mission threshold.",
+    "sourceType": "NASA STANDARD"
   },
   {
     "id": "crew_size",
@@ -87,7 +95,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Reference surface mission crew size."
+    "note": "Reference surface mission crew size.",
+    "sourceType": "DESIGN ASSUMPTION"
   },
   {
     "id": "cargo_budget_kg",
@@ -97,7 +106,8 @@
     "sourceId": "nasa_std_3001",
     "verified": true,
     "gameScale": 1,
-    "note": "40 metric tonnes total landed payload limit."
+    "note": "40 metric tonnes total landed payload limit.",
+    "sourceType": "DESIGN ASSUMPTION"
   },
   {
     "id": "habitat_base_load_kw",
@@ -107,7 +117,8 @@
     "sourceId": "bvad",
     "verified": true,
     "gameScale": 1,
-    "note": "Continuous power for lighting, environmental computers, comms, and thermal control."
+    "note": "Continuous power for lighting, environmental computers, comms, and thermal control.",
+    "sourceType": "DESIGN ASSUMPTION"
   },
   {
     "id": "radiation_gameScale",
@@ -117,6 +128,7 @@
     "sourceId": "curiosity_rad",
     "verified": true,
     "gameScale": 2.2,
-    "note": "Amplified 2.2x so that 180 sols unshielded exceeds the 250 mSv NASA limit, teaching the necessity of shielding."
+    "note": "Amplified 2.2x so that 180 sols unshielded exceeds the 250 mSv NASA limit, teaching the necessity of shielding.",
+    "sourceType": "DESIGN ASSUMPTION"
   }
 ]
