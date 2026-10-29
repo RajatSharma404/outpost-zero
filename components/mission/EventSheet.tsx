@@ -5,7 +5,6 @@ import type { SimulationEvent, SimulationState } from '../../lib/sim/types';
 import { isChoiceUnlocked } from '../../lib/sim/events';
 import { getItem } from '../../lib/data';
 import { Button } from '../ui/Button';
-import { Icon } from '../ui/Icon';
 
 interface EventSheetProps {
   event: SimulationEvent;
@@ -15,10 +14,63 @@ interface EventSheetProps {
 
 export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectChoice }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  // Focus trap on dialog mount
+  // Focus trap & trigger return restoration
   useEffect(() => {
-    dialogRef.current?.focus();
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    // Focus first actionable button or the dialog container
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [tabindex="0"]'
+    );
+    if (focusable && focusable.length > 0) {
+      focusable[0].focus();
+    } else {
+      dialogRef.current?.focus();
+    }
+
+    // Circular Tab/Shift+Tab focus trap
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!dialogRef.current) return;
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex="0"]'
+        )
+      );
+
+      if (e.key === 'Tab') {
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstEl = focusableElements[0];
+        const lastEl = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstEl || document.activeElement === dialogRef.current) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      // Restore focus to original triggering node
+      if (previouslyFocusedRef.current && typeof previouslyFocusedRef.current.focus === 'function') {
+        previouslyFocusedRef.current.focus();
+      }
+    };
   }, []);
 
   return (
@@ -44,8 +96,8 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
         aria-modal="true"
         aria-labelledby="event-dialog-title"
         aria-describedby="event-dialog-narrative"
-        aria-live="assertive"
         tabIndex={-1}
+        className="event-sheet-modal"
         style={{
           backgroundColor: 'var(--basalt-2)',
           border: '2px solid var(--ember)',
@@ -67,6 +119,8 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'baseline',
+            flexWrap: 'wrap',
+            gap: 'var(--space-2)',
           }}
         >
           <div>
@@ -98,6 +152,7 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
           </div>
 
           <div
+            className="tabular-nums"
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: 'var(--fs-label)',
@@ -141,6 +196,7 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
           {event.choices.map((choice, idx) => {
             const unlocked = isChoiceUnlocked(choice, state);
             const reqItem = choice.requires ? getItem(choice.requires) : undefined;
+            const reasonId = `disabled-reason-${choice.id}`;
 
             return (
               <div
@@ -152,11 +208,12 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
                   padding: 'var(--space-3)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                   <Button
                     variant={unlocked ? 'secondary' : 'ghost'}
                     size="md"
                     disabled={!unlocked}
+                    aria-describedby={!unlocked ? reasonId : undefined}
                     onClick={() => onSelectChoice(choice.id)}
                     style={{
                       textDecoration: unlocked ? 'none' : 'line-through',
@@ -170,6 +227,7 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
 
                   {!unlocked && reqItem && (
                     <span
+                      id={reasonId}
                       style={{
                         fontFamily: 'var(--font-mono)',
                         fontSize: 'var(--fs-detail)',
@@ -190,7 +248,7 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
                 <div
                   style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--fs-label)',
+                    fontSize: 'var(--fs-detail)',
                     color: unlocked ? 'var(--ink-dim)' : 'var(--event-dim)',
                     lineHeight: 1.3,
                     paddingLeft: 'var(--space-2)',
@@ -205,6 +263,30 @@ export const EventSheet: React.FC<EventSheetProps> = ({ event, state, onSelectCh
           })}
         </div>
       </div>
+
+      <style jsx>{`
+        .event-sheet-modal {
+          animation: modalEntrance 140ms ease-out forwards;
+        }
+
+        @keyframes modalEntrance {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .event-sheet-modal {
+            animation: none !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
