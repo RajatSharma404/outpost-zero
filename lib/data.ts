@@ -14,6 +14,7 @@ export const ConstantSchema = z.object({
   verified: z.boolean(),
   gameScale: z.number(),
   note: z.string(),
+  sourceType: z.enum(['MEASURED', 'NASA STANDARD', 'DESIGN ASSUMPTION']).optional(),
 });
 
 export const ItemEffectSchema = z.object({
@@ -73,6 +74,7 @@ export const SourceSchema = z.object({
   url: z.string(),
   accessedOn: z.string(),
   usedFor: z.string(),
+  sourceType: z.enum(['MEASURED', 'NASA STANDARD', 'DESIGN ASSUMPTION']).optional(),
 });
 
 export const ConstantsListSchema = z.array(ConstantSchema);
