@@ -348,6 +348,34 @@ export default function ReportPage() {
         </div>
       </div>
 
+      {/* Seed + Loadout Configuration Summary for Classmates */}
+      <div
+        className="tabular-nums"
+        style={{
+          backgroundColor: 'var(--basalt-2)',
+          border: '1px solid var(--rule)',
+          borderRadius: 'var(--r-1)',
+          padding: 'var(--space-3)',
+          marginBottom: 'var(--space-3)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--fs-detail)',
+          color: 'var(--ink-dim)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--space-2)',
+        }}
+      >
+        <div>
+          <span style={{ color: 'var(--ember)', fontWeight: 700 }}>CHALLENGE CONFIGURATION: </span>
+          Seed: <strong>#{loadout.seed}</strong> | Mode: <strong>{loadout.mode.toUpperCase()} ({simulationState.maxSols}s)</strong> | Hardware: <strong>{loadout.itemIds.length} Modules</strong>
+        </div>
+        <div>
+          Stores: {loadout.consumables.waterKg.toLocaleString()}kg H2O / {loadout.consumables.o2Kg.toLocaleString()}kg O2 / {loadout.consumables.foodKg.toLocaleString()}kg Food
+        </div>
+      </div>
+
       {/* Action Toolbar */}
       <div
         style={{
@@ -372,18 +400,18 @@ export default function ReportPage() {
           </Button>
         </div>
 
-        {copyStatus && (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-label)',
-              color: 'var(--sage)',
-              fontWeight: 600,
-            }}
-          >
-            {copyStatus}
-          </span>
-        )}
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--fs-label)',
+            color: 'var(--sage)',
+            fontWeight: 600,
+          }}
+        >
+          {copyStatus}
+        </div>
       </div>
     </div>
   );
