@@ -23,9 +23,13 @@ export default function MissionPage() {
   } = useGameStore();
 
   const [activeMobileTab, setActiveMobileTab] = useState<'cutaway' | 'meters' | 'log'>('cutaway');
+  const [telemetryState, setTelemetryState] = useState<'loading' | 'live' | 'stale' | 'offline'>('loading');
   const [realtimeData, setRealtimeData] = useState<{
     level: string;
     kIndex: number;
+    timestamp?: string;
+    offline?: boolean;
+    cached?: boolean;
     marsEphemeris?: { distMillionKm: number; signalDelayFormatted: string };
   } | null>(null);
 
@@ -33,9 +37,22 @@ export default function MissionPage() {
     fetch('/api/space-weather')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data && !data.offline) setRealtimeData(data);
+        if (!data) {
+          setTelemetryState('offline');
+          return;
+        }
+        setRealtimeData(data);
+        if (data.offline) {
+          setTelemetryState('offline');
+        } else if (data.cached) {
+          setTelemetryState('stale');
+        } else {
+          setTelemetryState('live');
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        setTelemetryState('offline');
+      });
   }, []);
 
   // Auto-initialize if opened directly without prior pack launch
@@ -45,10 +62,9 @@ export default function MissionPage() {
     }
   }, [simulationState, startMission]);
 
-  // Simulation timer loop
+  // Drift-corrected simulation timer loop with document.hidden auto-pause
   useEffect(() => {
-    if (!simulationState) return;
-    if (simulationState.status !== 'running' || simSpeed === 0) return;
+    if (!simulationState || simulationState.status !== 'running' || simSpeed === 0) return;
 
     const intervalMap: Record<number, number> = {
       1: 850,
@@ -57,12 +73,39 @@ export default function MissionPage() {
     };
 
     const intervalMs = intervalMap[simSpeed] || 850;
-    const timer = setInterval(() => {
-      advanceSol();
-    }, intervalMs);
+    let timeoutId: NodeJS.Timeout | null = null;
+    let expected = performance.now() + intervalMs;
 
-    return () => clearInterval(timer);
-  }, [simulationState, simSpeed, advanceSol]);
+    const step = () => {
+      if (document.hidden) {
+        // Paused while tab is hidden, check again in 500ms
+        timeoutId = setTimeout(step, 500);
+        return;
+      }
+
+      const now = performance.now();
+      const drift = now - expected;
+      advanceSol();
+      expected += intervalMs;
+      const nextDelay = Math.max(0, intervalMs - drift);
+      timeoutId = setTimeout(step, nextDelay);
+    };
+
+    timeoutId = setTimeout(step, intervalMs);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        expected = performance.now() + intervalMs;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [simulationState?.status, simSpeed, advanceSol]);
 
   // Fast-forward until next event or mission end
   const handleSkipToEvent = useCallback(() => {
@@ -94,14 +137,14 @@ export default function MissionPage() {
         }
       }
 
-      if (e.key === ' ') {
+      if (e.key === ' ' || e.key === '0') {
         e.preventDefault();
         setSimSpeed(simSpeed === 0 ? 1 : 0);
       } else if (e.key === '1') {
         setSimSpeed(1);
       } else if (e.key === '2') {
         setSimSpeed(4);
-      } else if (e.key === '3') {
+      } else if (e.key === '3' || e.key === '4') {
         setSimSpeed(16);
       } else if (e.key === 'e' || e.key === 'E') {
         handleSkipToEvent();
@@ -197,32 +240,73 @@ export default function MissionPage() {
         </nav>
       </header>
 
-      {/* Live NASA Deep Space Telemetry Ribbon */}
-      {realtimeData && realtimeData.marsEphemeris && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 'var(--space-2)',
-            backgroundColor: 'var(--basalt-2)',
-            border: '1px solid var(--rule)',
-            padding: 'var(--space-1) var(--space-3)',
-            marginBottom: 'var(--space-2)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-caption)',
-            color: 'var(--ink-dim)',
-          }}
-        >
-          <div>
-            <span style={{ color: 'var(--ember)', fontWeight: 600 }}>LIVE NASA/JPL TELEMETRY:</span> Range {realtimeData.marsEphemeris.distMillionKm}M km | 1-Way Comms Latency: <strong style={{ color: 'var(--ink)' }}>{realtimeData.marsEphemeris.signalDelayFormatted}</strong>
+      {/* Telemetry Ribbon with all states (loading skeleton, live timestamp, stale indicator) */}
+      <div
+        className="tabular-nums"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 'var(--space-2)',
+          backgroundColor: 'var(--basalt-2)',
+          border: '1px solid var(--rule)',
+          padding: 'var(--space-1) var(--space-3)',
+          marginBottom: 'var(--space-2)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--fs-detail)',
+          color: 'var(--ink-dim)',
+          minHeight: '28px',
+        }}
+      >
+        {telemetryState === 'loading' ? (
+          <div style={{ color: 'var(--ink-dim)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <span style={{ color: 'var(--ember)' }}>[TELEMETRY SYNC]</span> Querying NASA Horizons & NOAA SWPC Gateway...
           </div>
-          <div>
-            Space Weather: <span style={{ color: realtimeData.level === 'storm' ? 'var(--alarm)' : realtimeData.level === 'active' ? 'var(--caution)' : 'var(--sage)' }}>Kp {realtimeData.kIndex} ({realtimeData.level.toUpperCase()})</span>
-          </div>
-        </div>
-      )}
+        ) : telemetryState === 'offline' || !realtimeData?.marsEphemeris ? (
+          <>
+            <div>
+              <span style={{ color: 'var(--ink-dim)', fontWeight: 600 }}>[OFFLINE MODEL]:</span> Mars Range 225.0M km | 1-Way Latency: 12.5m (Simulated Orbit)
+            </div>
+            <div>
+              Space Weather: <span style={{ color: 'var(--sage)' }}>Kp 2 (QUIET BASELINE)</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <span style={{ color: telemetryState === 'stale' ? 'var(--caution)' : 'var(--ember)', fontWeight: 600 }}>
+                {telemetryState === 'stale' ? '[CACHED TELEMETRY]:' : '[LIVE NASA/JPL TELEMETRY]:'}
+              </span>{' '}
+              Range {realtimeData.marsEphemeris.distMillionKm}M km | 1-Way Comms Latency:{' '}
+              <strong style={{ color: 'var(--ink)' }}>{realtimeData.marsEphemeris.signalDelayFormatted}</strong>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <span>
+                Space Weather:{' '}
+                <span
+                  style={{
+                    color:
+                      realtimeData.level === 'storm'
+                        ? 'var(--alarm)'
+                        : realtimeData.level === 'active'
+                        ? 'var(--caution)'
+                        : 'var(--sage)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Kp {realtimeData.kIndex} ({realtimeData.level.toUpperCase()})
+                </span>
+              </span>
+              {realtimeData.timestamp && (
+                <span style={{ color: 'var(--ink-dim)', fontSize: 'var(--fs-caption)' }}>
+                  [{realtimeData.timestamp.slice(11, 16)} UTC]
+                </span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Clock and Simulation Speed Rail */}
       <div style={{ marginBottom: 'var(--space-3)' }}>
