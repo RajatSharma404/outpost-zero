@@ -44,6 +44,7 @@ export interface ConstantEntry {
   verified: boolean;
   gameScale: number;
   note: string;
+  sourceType?: 'MEASURED' | 'NASA STANDARD' | 'DESIGN ASSUMPTION';
 }
 
 export interface SourceEntry {
@@ -53,6 +54,7 @@ export interface SourceEntry {
   url: string;
   accessedOn: string;
   usedFor: string;
+  sourceType?: 'MEASURED' | 'NASA STANDARD' | 'DESIGN ASSUMPTION';
 }
 
 export interface EventPrecondition {
