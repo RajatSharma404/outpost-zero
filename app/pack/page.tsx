@@ -1,33 +1,34 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '../../store/game';
-import { ITEMS } from '../../lib/data';
-import { analyzeLoadout } from '../../lib/sim/loadout';
 import { decodeChallenge } from '../../lib/share';
-import { MassBar } from '../../components/pack/MassBar';
-import { ItemCard } from '../../components/pack/ItemCard';
-import { ConsumablesSliders } from '../../components/pack/ConsumablesSliders';
-import { LoadoutSummary } from '../../components/pack/LoadoutSummary';
-import { Button } from '../../components/ui/Button';
+import { CrewRosterPlanner } from '../../components/pack/CrewRosterPlanner';
+import { VehicleSelector } from '../../components/pack/VehicleSelector';
+import { ManifestStowageView } from '../../components/pack/ManifestStowageView';
+import { LifeSupportArchitecture } from '../../components/pack/LifeSupportArchitecture';
+import { ContingencyPolicyPlanner } from '../../components/pack/ContingencyPolicyPlanner';
+
+export type WizardStep = 'crew' | 'vehicle' | 'manifest' | 'eclss' | 'contingency';
 
 export default function PackPage() {
   const router = useRouter();
   const {
-    loadout,
-    toggleItem,
-    setConsumables,
-    setMode,
-    setSeed,
+    coupledConfig,
     setLoadout,
     startMission,
+    loadPreset,
+    hmiTheme,
+    toggleTheme,
+    audioMuted,
+    toggleAudioMute,
   } = useGameStore();
 
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeStep, setActiveStep] = useState<WizardStep>('crew');
 
-  // Check URL hash for shared challenge fragment
+  // Check URL hash for shared challenge fragment (H3 constraint)
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const decoded = decodeChallenge(window.location.hash);
@@ -37,31 +38,24 @@ export default function PackPage() {
     }
   }, [setLoadout]);
 
-  const missionLengthSols = loadout.mode === 'tutorial' ? 60 : loadout.mode === 'standard' ? 180 : 500;
-
-  const analysis = useMemo(() => {
-    return analyzeLoadout(loadout, missionLengthSols, ITEMS);
-  }, [loadout, missionLengthSols]);
-
-  const packedItems = useMemo(() => {
-    return ITEMS.filter((item) => loadout.itemIds.includes(item.id));
-  }, [loadout.itemIds]);
-
-  const filteredItems = useMemo(() => {
-    if (activeCategory === 'all') return ITEMS;
-    return ITEMS.filter((item) => item.category === activeCategory);
-  }, [activeCategory]);
-
   const handleLaunch = () => {
-    if (analysis.mass.isOverBudget) return;
     startMission();
     router.push('/mission');
   };
 
-  const hasRecycler = loadout.itemIds.includes('eclss_recycler');
-  const hasMoxie = loadout.itemIds.includes('moxie_scaleup');
-  const hasGreenhouse =
-    loadout.itemIds.includes('greenhouse_small') || loadout.itemIds.includes('greenhouse_large');
+  const handleQuickStart = () => {
+    loadPreset('quick30');
+    startMission();
+    router.push('/mission');
+  };
+
+  const steps: { id: WizardStep; label: string; index: string }[] = [
+    { id: 'crew', label: 'Crew Roster', index: '01' },
+    { id: 'vehicle', label: 'Vehicle Architecture', index: '02' },
+    { id: 'manifest', label: 'Payload Manifest', index: '03' },
+    { id: 'eclss', label: 'Life Support ECLSS', index: '04' },
+    { id: 'contingency', label: 'Timeline & Margins', index: '05' },
+  ];
 
   return (
     <div
@@ -70,6 +64,12 @@ export default function PackPage() {
         margin: '0 auto',
         padding: 'var(--space-4)',
         boxSizing: 'border-box',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--space-4)',
+        backgroundColor: 'var(--hmi-bg)',
+        color: 'var(--hmi-text)',
       }}
     >
       {/* Top Header / Flight Tape */}
@@ -79,213 +79,259 @@ export default function PackPage() {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 'var(--space-2)',
-          borderBottom: '1px solid var(--rule)',
+          gap: 'var(--space-3)',
+          borderBottom: '1px solid var(--hmi-border)',
           paddingBottom: 'var(--space-3)',
-          marginBottom: 'var(--space-4)',
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <Link
+            href="/"
+            style={{
+              color: 'var(--hmi-text-dim)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-detail)',
+            }}
+          >
+            ← MISSION CONTROL
+          </Link>
+          <span style={{ color: 'var(--hmi-border)' }}>|</span>
           <span
             style={{
               fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
+              fontSize: 'var(--fs-lead)',
               color: 'var(--oxide)',
-              letterSpacing: '0.15em',
+              letterSpacing: '0.12em',
               textTransform: 'uppercase',
               fontWeight: 700,
             }}
           >
-            FLIGHT LOGISTICS // SECTION 01: PAYLOAD MANIFEST
+            OUTPOST ZERO // MISSION PLANNER WIZARD
           </span>
-          <h1
-            style={{
-              fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-display)',
-              margin: '2px 0 0 0',
-              fontWeight: 700,
-              color: 'var(--ink)',
-              lineHeight: 1,
-            }}
-          >
-            PACK THE LANDER
-          </h1>
         </div>
 
-        <nav style={{ display: 'flex', gap: 'var(--space-3)' }}>
-          <Link
-            href="/how-it-works"
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          {/* Quick Start 30-sol preset button */}
+          <button
+            type="button"
+            onClick={handleQuickStart}
             style={{
-              color: 'var(--ink-dim)',
-              fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              letterSpacing: '0.08em',
+              padding: 'var(--space-1) var(--space-3)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--caution)',
+              color: 'var(--caution)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-detail)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-1)',
+            }}
+            title="Launch 30-sol Martian surface game on coupled physics engine"
+          >
+            ⚡ QUICK START (30 SOLS)
+          </button>
+
+          {/* Theme Switcher: ISA-101 Day vs Basalt Night */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            style={{
               padding: 'var(--space-1) var(--space-2)',
-              border: '1px solid var(--rule)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: 'var(--hmi-text)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              cursor: 'pointer',
+              borderRadius: 'var(--r-1)',
             }}
           >
-            How it Works
-          </Link>
+            {hmiTheme === 'night' ? '☀ HMI DAY' : '☾ BASALT NIGHT'}
+          </button>
+
+          {/* Audio alarm mute */}
+          <button
+            type="button"
+            onClick={toggleAudioMute}
+            style={{
+              padding: 'var(--space-1) var(--space-2)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: audioMuted ? 'var(--hmi-text-dim)' : 'var(--sage)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              cursor: 'pointer',
+              borderRadius: 'var(--r-1)',
+            }}
+          >
+            {audioMuted ? 'MUTED' : 'AUDIO ON'}
+          </button>
+
+          {/* Registry Browser Link */}
           <Link
             href="/sources"
             style={{
-              color: 'var(--ink-dim)',
-              fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              letterSpacing: '0.08em',
               padding: 'var(--space-1) var(--space-2)',
-              border: '1px solid var(--rule)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: 'var(--hmi-text)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              borderRadius: 'var(--r-1)',
             }}
           >
-            Sources
+            CONSTANTS REGISTRY
           </Link>
-        </nav>
+        </div>
       </header>
 
-      {/* Mass Bar Display */}
-      <MassBar mass={analysis.mass} packedItems={packedItems} />
-
-      {/* Main 2-Column Responsive Layout */}
-      <div
+      {/* Stepper Navigation Bar */}
+      <nav
+        aria-label="Wizard Steps"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 360px',
-          gap: 'var(--space-6)',
-          alignItems: 'start',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 'var(--space-2)',
+          borderBottom: '1px solid var(--hmi-border)',
+          paddingBottom: 'var(--space-2)',
         }}
       >
-        {/* Left Column: Consumables + Hardware Item Catalog */}
-        <main>
-          {/* Consumables Sliders */}
-          <ConsumablesSliders
-            consumables={loadout.consumables}
-            days={analysis.consumablesDays}
-            missionLengthSols={missionLengthSols}
-            hasRecycler={hasRecycler}
-            hasMoxie={hasMoxie}
-            hasGreenhouse={hasGreenhouse}
-            onChange={setConsumables}
-          />
-
-          {/* Hardware Catalog Section */}
-          <div style={{ marginBottom: 'var(--space-4)' }}>
-            <div
+        {steps.map((s) => {
+          const isActive = activeStep === s.id;
+          return (
+            <button
+              type="button"
+              key={s.id}
+              onClick={() => setActiveStep(s.id)}
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                flexWrap: 'wrap',
                 gap: 'var(--space-2)',
-                borderBottom: '1px solid var(--rule)',
-                paddingBottom: 'var(--space-2)',
-                marginBottom: 'var(--space-3)',
+                padding: 'var(--space-2) var(--space-3)',
+                backgroundColor: isActive ? 'var(--hmi-surface-elevated)' : 'transparent',
+                border: isActive ? '2px solid var(--ember)' : '1px solid var(--hmi-border)',
+                borderRadius: 'var(--r-1)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                color: 'var(--hmi-text)',
               }}
             >
-              <h2
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--fs-caption)',
+                  color: isActive ? 'var(--ember)' : 'var(--hmi-text-dim)',
+                  fontWeight: 700,
+                }}
+              >
+                {s.index}
+              </span>
+              <span
                 style={{
                   fontFamily: 'var(--font-condensed)',
-                  fontSize: 'var(--fs-lead)',
-                  margin: 0,
-                  fontWeight: 600,
-                  color: 'var(--ink)',
+                  fontSize: 'var(--fs-body)',
+                  fontWeight: isActive ? 700 : 500,
                   textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
-                Hardware Modules ({packedItems.length} Loaded)
-              </h2>
+                {s.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
-              {/* Category Filter Tabs (Accessible Tablist with Arrow Navigation) */}
-              <div
-                role="tablist"
-                aria-label="Hardware module categories"
-                style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap' }}
-                onKeyDown={(e) => {
-                  const categories = ['all', 'power', 'lifesupport', 'shielding', 'food', 'spares', 'comfort'];
-                  const currentIndex = categories.indexOf(activeCategory);
-                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    const nextIndex = (currentIndex + 1) % categories.length;
-                    setActiveCategory(categories[nextIndex]);
-                    document.getElementById(`tab-cat-${categories[nextIndex]}`)?.focus();
-                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const prevIndex = (currentIndex - 1 + categories.length) % categories.length;
-                    setActiveCategory(categories[prevIndex]);
-                    document.getElementById(`tab-cat-${categories[prevIndex]}`)?.focus();
-                  } else if (e.key === 'Home') {
-                    e.preventDefault();
-                    setActiveCategory(categories[0]);
-                    document.getElementById(`tab-cat-${categories[0]}`)?.focus();
-                  } else if (e.key === 'End') {
-                    e.preventDefault();
-                    setActiveCategory(categories[categories.length - 1]);
-                    document.getElementById(`tab-cat-${categories[categories.length - 1]}`)?.focus();
-                  }
-                }}
-              >
-                {['all', 'power', 'lifesupport', 'shielding', 'food', 'spares', 'comfort'].map((cat) => (
-                  <button
-                    key={cat}
-                    id={`tab-cat-${cat}`}
-                    role="tab"
-                    aria-selected={activeCategory === cat}
-                    tabIndex={activeCategory === cat ? 0 : -1}
-                    onClick={() => setActiveCategory(cat)}
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'var(--fs-label)',
-                      textTransform: 'uppercase',
-                      padding: 'var(--space-1) var(--space-2)',
-                      border: `1px solid ${activeCategory === cat ? 'var(--ember)' : 'var(--rule)'}`,
-                      backgroundColor: activeCategory === cat ? 'var(--ember)' : 'transparent',
-                      color: activeCategory === cat ? 'var(--basalt)' : 'var(--ink)',
-                      fontWeight: activeCategory === cat ? 700 : 500,
-                      cursor: 'pointer',
-                      borderRadius: 'var(--r-0)',
-                      transition: 'background-color 0.1s ease',
-                    }}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Active Wizard Step Content */}
+      <main style={{ flex: 1 }}>
+        {activeStep === 'crew' && <CrewRosterPlanner />}
+        {activeStep === 'vehicle' && <VehicleSelector />}
+        {activeStep === 'manifest' && <ManifestStowageView />}
+        {activeStep === 'eclss' && <LifeSupportArchitecture />}
+        {activeStep === 'contingency' && <ContingencyPolicyPlanner />}
+      </main>
 
-            {/* Grid of Item Cards */}
-            <div
+      {/* Bottom Launch & Stepper Control Footer */}
+      <footer
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--space-3)',
+          borderTop: '1px solid var(--hmi-border)',
+          paddingTop: 'var(--space-3)',
+          marginTop: 'var(--space-2)',
+        }}
+      >
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          {activeStep !== 'crew' && (
+            <button
+              type="button"
+              onClick={() => {
+                const idx = steps.findIndex((s) => s.id === activeStep);
+                if (idx > 0) setActiveStep(steps[idx - 1].id);
+              }}
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 'var(--space-3)',
+                padding: 'var(--space-2) var(--space-4)',
+                backgroundColor: 'var(--hmi-surface)',
+                border: '1px solid var(--hmi-border)',
+                color: 'var(--hmi-text)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-detail)',
+                cursor: 'pointer',
+                borderRadius: 'var(--r-1)',
               }}
             >
-              {filteredItems.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  isPacked={loadout.itemIds.includes(item.id)}
-                  onToggle={toggleItem}
-                />
-              ))}
-            </div>
-          </div>
-        </main>
+              ← PREVIOUS STEP
+            </button>
+          )}
 
-        {/* Right Column: Sticky Summary & Launch Authorization */}
-        <LoadoutSummary
-          analysis={analysis}
-          mode={loadout.mode}
-          seed={loadout.seed}
-          missionLengthSols={missionLengthSols}
-          onSetMode={setMode}
-          onSetSeed={setSeed}
-          onLaunch={handleLaunch}
-        />
-      </div>
+          {activeStep !== 'contingency' && (
+            <button
+              type="button"
+              onClick={() => {
+                const idx = steps.findIndex((s) => s.id === activeStep);
+                if (idx < steps.length - 1) setActiveStep(steps[idx + 1].id);
+              }}
+              style={{
+                padding: 'var(--space-2) var(--space-4)',
+                backgroundColor: 'var(--hmi-surface)',
+                border: '1px solid var(--hmi-border)',
+                color: 'var(--hmi-text)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-detail)',
+                cursor: 'pointer',
+                borderRadius: 'var(--r-1)',
+              }}
+            >
+              NEXT STEP →
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleLaunch}
+          style={{
+            padding: 'var(--space-3) var(--space-8)',
+            backgroundColor: 'var(--sage)',
+            color: 'var(--color-basalt)',
+            fontFamily: 'var(--font-condensed)',
+            fontSize: 'var(--fs-lead)',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            border: 'none',
+            borderRadius: 'var(--r-1)',
+          }}
+        >
+          🚀 LAUNCH MISSION TELEMETRY
+        </button>
+      </footer>
     </div>
   );
 }

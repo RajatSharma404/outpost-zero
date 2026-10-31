@@ -67,22 +67,52 @@ export function playEventBeep() {
 
 /** Low dual-tone alarm for critical alerts */
 export function playAlarmTone() {
+  playPriorityAlarm(1);
+}
+
+/** Procedural Web Audio alarm by ISA-101 priority (1=Critical, 2=Warning, 3=Advisory) */
+export function playPriorityAlarm(priority: 1 | 2 | 3) {
   const ctx = getContext();
   if (!ctx) return;
   try {
+    const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(220, ctx.currentTime);
-    osc.frequency.setValueAtTime(180, ctx.currentTime + 0.15);
 
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.35);
+    if (priority === 1) {
+      // Priority 1: High urgency alternating pulse
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(440, now + 0.1);
+      osc.frequency.setValueAtTime(880, now + 0.2);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (priority === 2) {
+      // Priority 2: Warning two-tone chime
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587, now);
+      osc.frequency.setValueAtTime(880, now + 0.12);
+      gain.gain.setValueAtTime(0.07, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } else {
+      // Priority 3: Advisory gentle ping
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, now);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    }
   } catch {
     // Fail silently
   }

@@ -299,3 +299,53 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
     },
   ];
 }
+
+/**
+ * All selectable ECLSS technologies across life-support functions:
+ * Water (WRS, BPA), Air/O2 (OGA, Sabatier, Bosch, Pyrolysis), Food/Bioregeneration (Plants).
+ */
+export const ALL_AVAILABLE_ECLSS_UNITS: ECLSSUnit[] = [
+  ...createDefaultEclssSuite(),
+  {
+    id: 'eclss_bosch',
+    name: 'Bosch Carbon Deposition Reactor (Solid Carbon)',
+    throughputKgPerDay: 8.0,
+    efficiency: 0.98,
+    powerKw: 2.1,
+    massKg: 420,
+    volumeM3: 1.2,
+    mtbfHours: 4000,
+    repairCrewHours: 6.0,
+    sparesCarried: 2,
+    status: 'nominal',
+    offlineHours: 0,
+  },
+  {
+    id: 'eclss_pyrolysis',
+    name: 'Methane Pyrolysis Unit (CH4 -> C(s) + 2 H2)',
+    throughputKgPerDay: 4.0,
+    efficiency: 0.90,
+    powerKw: 1.8,
+    massKg: 280,
+    volumeM3: 0.7,
+    mtbfHours: 4500,
+    repairCrewHours: 4.5,
+    sparesCarried: 1,
+    status: 'nominal',
+    offlineHours: 0,
+  },
+  {
+    id: 'eclss_plants',
+    name: 'Bioregenerative Crop Chamber (Hydroponics 50 m²)',
+    throughputKgPerDay: 12.0,
+    efficiency: 0.95,
+    powerKw: 5.5,
+    massKg: 1200,
+    volumeM3: 18.0,
+    mtbfHours: 10000,
+    repairCrewHours: 8.0,
+    sparesCarried: 3,
+    status: 'nominal',
+    offlineHours: 0,
+  },
+];

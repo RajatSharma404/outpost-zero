@@ -4,67 +4,45 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '../../store/game';
-import { HabitatCutaway } from '../../components/mission/HabitatCutaway';
-import { MeterRail } from '../../components/mission/MeterRail';
-import { SolClock } from '../../components/mission/SolClock';
-import { EventSheet } from '../../components/mission/EventSheet';
-import { MissionLog } from '../../components/mission/MissionLog';
-import { Button } from '../../components/ui/Button';
-import { Icon } from '../../components/ui/Icon';
+import { L1MissionOverview } from '../../components/mission/L1MissionOverview';
+import { L2WaterLoopView } from '../../components/mission/L2WaterLoopView';
+import { L2AirLoopView } from '../../components/mission/L2AirLoopView';
+import { L2NutritionView } from '../../components/mission/L2NutritionView';
+import { L2VehicleStowageView } from '../../components/mission/L2VehicleStowageView';
+import { L2ReliabilitySparesView } from '../../components/mission/L2ReliabilitySparesView';
+import { L3DiagnosticsDrawer } from '../../components/mission/L3DiagnosticsDrawer';
+
+export type L2SubsystemTab = 'water' | 'air' | 'nutrition' | 'stowage' | 'reliability';
 
 export default function MissionPage() {
   const router = useRouter();
   const {
-    simulationState,
+    coupledOutput,
+    activeSolIndex,
+    stepCoupledSol,
+    jumpToCoupledSol,
     simSpeed,
-    startMission,
-    advanceSol,
     setSimSpeed,
+    startMission,
+    hmiTheme,
+    toggleTheme,
+    audioMuted,
+    toggleAudioMute,
   } = useGameStore();
 
-  const [activeMobileTab, setActiveMobileTab] = useState<'cutaway' | 'meters' | 'log'>('cutaway');
-  const [telemetryState, setTelemetryState] = useState<'loading' | 'live' | 'stale' | 'offline'>('loading');
-  const [realtimeData, setRealtimeData] = useState<{
-    level: string;
-    kIndex: number;
-    timestamp?: string;
-    offline?: boolean;
-    cached?: boolean;
-    marsEphemeris?: { distMillionKm: number; signalDelayFormatted: string };
-  } | null>(null);
+  const [activeTab, setActiveTab] = useState<L2SubsystemTab>('water');
+  const [showDiagnostics, setShowDiagnostics] = useState<boolean>(false);
 
+  // Auto-initialize if opened directly
   useEffect(() => {
-    fetch('/api/space-weather')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) {
-          setTelemetryState('offline');
-          return;
-        }
-        setRealtimeData(data);
-        if (data.offline) {
-          setTelemetryState('offline');
-        } else if (data.cached) {
-          setTelemetryState('stale');
-        } else {
-          setTelemetryState('live');
-        }
-      })
-      .catch(() => {
-        setTelemetryState('offline');
-      });
-  }, []);
-
-  // Auto-initialize if opened directly without prior pack launch
-  useEffect(() => {
-    if (!simulationState) {
+    if (!coupledOutput) {
       startMission();
     }
-  }, [simulationState, startMission]);
+  }, [coupledOutput, startMission]);
 
-  // Drift-corrected simulation timer loop with document.hidden auto-pause
+  // Simulation timer loop
   useEffect(() => {
-    if (!simulationState || simulationState.status !== 'running' || simSpeed === 0) return;
+    if (!coupledOutput || simSpeed === 0) return;
 
     const intervalMap: Record<number, number> = {
       1: 850,
@@ -73,110 +51,68 @@ export default function MissionPage() {
     };
 
     const intervalMs = intervalMap[simSpeed] || 850;
-    let timeoutId: NodeJS.Timeout | null = null;
-    let expected = performance.now() + intervalMs;
-
-    const step = () => {
-      if (document.hidden) {
-        // Paused while tab is hidden, check again in 500ms
-        timeoutId = setTimeout(step, 500);
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+      if (activeSolIndex >= coupledOutput.dailyResults.length - 1) {
+        setSimSpeed(0);
         return;
       }
+      stepCoupledSol();
+    }, intervalMs);
 
-      const now = performance.now();
-      const drift = now - expected;
-      advanceSol();
-      expected += intervalMs;
-      const nextDelay = Math.max(0, intervalMs - drift);
-      timeoutId = setTimeout(step, nextDelay);
-    };
+    return () => clearInterval(interval);
+  }, [coupledOutput, simSpeed, activeSolIndex, stepCoupledSol, setSimSpeed]);
 
-    timeoutId = setTimeout(step, intervalMs);
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        expected = performance.now() + intervalMs;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [simulationState?.status, simSpeed, advanceSol]);
-
-  // Fast-forward until next event or mission end
-  const handleSkipToEvent = useCallback(() => {
-    if (!simulationState || simulationState.status !== 'running') return;
-    let limit = 0;
-    // Step forward until event or end condition
-    while (limit < 300) {
-      limit++;
-      advanceSol();
-      const current = useGameStore.getState().simulationState;
-      if (!current || current.status !== 'running') break;
-    }
-  }, [simulationState, advanceSol]);
-
-  // Keyboard navigation shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // If event modal is open, numbers 1-9 choose option
-      if (simulationState?.status === 'paused_event' && simulationState.pendingEvent) {
-        const choiceIdx = parseInt(e.key, 10) - 1;
-        if (
-          !isNaN(choiceIdx) &&
-          choiceIdx >= 0 &&
-          choiceIdx < simulationState.pendingEvent.choices.length
-        ) {
-          const choice = simulationState.pendingEvent.choices[choiceIdx];
-          advanceSol(choice.id);
-          return;
-        }
-      }
-
-      if (e.key === ' ' || e.key === '0') {
-        e.preventDefault();
-        setSimSpeed(simSpeed === 0 ? 1 : 0);
-      } else if (e.key === '1') {
-        setSimSpeed(1);
-      } else if (e.key === '2') {
-        setSimSpeed(4);
-      } else if (e.key === '3' || e.key === '4') {
-        setSimSpeed(16);
-      } else if (e.key === 'e' || e.key === 'E') {
-        handleSkipToEvent();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [simulationState, simSpeed, setSimSpeed, advanceSol, handleSkipToEvent]);
-
-  if (!simulationState) {
+  if (!coupledOutput) {
     return (
-      <div style={{ padding: 'var(--space-6)', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-        INITIALIZING OUTPOST ZERO SURFACE TELEMETRY...
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          backgroundColor: 'var(--hmi-bg)',
+          color: 'var(--hmi-text)',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        INITIALIZING COUPLED LIFE-SUPPORT TELEMETRY BUS...
       </div>
     );
   }
 
-  const isCompleted = simulationState.status === 'completed';
-  const isFailed = simulationState.status === 'failed';
-  const isConcluded = isCompleted || isFailed;
+  const currentStep = coupledOutput.dailyResults[activeSolIndex] || coupledOutput.dailyResults[0];
+  const totalDays = coupledOutput.totalDays;
+  const isMissionFinished = activeSolIndex >= coupledOutput.dailyResults.length - 1;
+
+  const handleFinishMission = () => {
+    router.push('/report');
+  };
+
+  const tabs: { id: L2SubsystemTab; label: string }[] = [
+    { id: 'water', label: 'Water Recovery Loop' },
+    { id: 'air', label: 'Air Loop & Carbon Ledger' },
+    { id: 'nutrition', label: 'Food, Vitamins & Health' },
+    { id: 'stowage', label: 'Vehicle Hab & Stowage' },
+    { id: 'reliability', label: 'MTBF & Spares Log' },
+  ];
 
   return (
     <div
       style={{
         maxWidth: '1440px',
         margin: '0 auto',
-        padding: 'var(--space-3) var(--space-4)',
+        padding: 'var(--space-4)',
         boxSizing: 'border-box',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--space-4)',
+        backgroundColor: 'var(--hmi-bg)',
+        color: 'var(--hmi-text)',
       }}
     >
-      {/* Flight Control Top Bar */}
+      {/* Top Header & Simulation Controls */}
       <header
         style={{
           display: 'flex',
@@ -184,273 +120,268 @@ export default function MissionPage() {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 'var(--space-2)',
-          borderBottom: '1px solid var(--rule)',
+          borderBottom: '1px solid var(--hmi-border)',
           paddingBottom: 'var(--space-2)',
-          marginBottom: 'var(--space-3)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <Link
+            href="/pack"
+            style={{
+              color: 'var(--hmi-text-dim)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+            }}
+          >
+            ← PLANNER
+          </Link>
+          <span style={{ color: 'var(--hmi-border)' }}>|</span>
           <span
             style={{
               fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
+              fontSize: 'var(--fs-lead)',
               color: 'var(--oxide)',
-              letterSpacing: '0.15em',
+              letterSpacing: '0.12em',
               textTransform: 'uppercase',
               fontWeight: 700,
             }}
           >
-            MISSION OPERATIONS // OUTPOST ZERO TELEMETRY
-          </span>
-          <span style={{ color: 'var(--rule)' }}>|</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--ink-dim)' }}>
-            CREW: {simulationState.crew.count} // HEALTH: {simulationState.crew.health}%
+            MISSION TELEMETRY BUS // ISA-101 HMI
           </span>
         </div>
 
-        <nav style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <Link
-            href="/pack"
+        {/* Playback & Speed Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          {/* Pause / Play */}
+          <button
+            type="button"
+            onClick={() => setSimSpeed(simSpeed === 0 ? 1 : 0)}
             style={{
-              color: 'var(--ink-dim)',
-              fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              padding: '2px 8px',
-              border: '1px solid var(--rule)',
+              padding: 'var(--space-1) var(--space-3)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: simSpeed === 0 ? 'var(--caution)' : 'var(--sage)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-detail)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
             }}
           >
-            Re-Pack Cargo
-          </Link>
-          <Link
-            href="/how-it-works"
+            {simSpeed === 0 ? '▶ RESUME' : '❚❚ PAUSE'}
+          </button>
+
+          {/* Speed Buttons */}
+          <div style={{ display: 'flex', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-0)' }}>
+            {([1, 4, 16] as const).map((spd) => (
+              <button
+                type="button"
+                key={spd}
+                onClick={() => setSimSpeed(spd)}
+                style={{
+                  padding: 'var(--space-1) var(--space-2)',
+                  backgroundColor: simSpeed === spd ? 'var(--hmi-nominal)' : 'transparent',
+                  border: 'none',
+                  color: simSpeed === spd ? 'var(--hmi-text)' : 'var(--hmi-text-dim)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--fs-caption)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {spd}X
+              </button>
+            ))}
+          </div>
+
+          {/* Single Step Sol Button */}
+          <button
+            type="button"
+            onClick={stepCoupledSol}
+            disabled={simSpeed !== 0 || isMissionFinished}
             style={{
-              color: 'var(--ink-dim)',
-              fontFamily: 'var(--font-condensed)',
-              fontSize: 'var(--fs-label)',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              padding: '2px 8px',
-              border: '1px solid var(--rule)',
+              padding: 'var(--space-1) var(--space-2)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: 'var(--hmi-text)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              cursor: simSpeed === 0 && !isMissionFinished ? 'pointer' : 'not-allowed',
+              opacity: simSpeed === 0 && !isMissionFinished ? 1 : 0.5,
+              borderRadius: 'var(--r-0)',
             }}
           >
-            Model Specs
-          </Link>
-        </nav>
+            +1 SOL →
+          </button>
+
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            style={{
+              padding: 'var(--space-1) var(--space-2)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: 'var(--hmi-text)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            {hmiTheme === 'night' ? '☀ DAY' : '☾ NIGHT'}
+          </button>
+
+          {/* Audio Alarm Toggle */}
+          <button
+            type="button"
+            onClick={toggleAudioMute}
+            style={{
+              padding: 'var(--space-1) var(--space-2)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--hmi-border)',
+              color: audioMuted ? 'var(--hmi-text-dim)' : 'var(--sage)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            {audioMuted ? 'MUTED' : 'AUDIO ON'}
+          </button>
+
+          {/* L3 Diagnostics Drawer Button */}
+          <button
+            type="button"
+            onClick={() => setShowDiagnostics(true)}
+            style={{
+              padding: 'var(--space-1) var(--space-2)',
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              border: '1px solid var(--ember)',
+              color: 'var(--ember)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            [L3 DIAGNOSTICS]
+          </button>
+
+          {/* Finish / Review Report Button */}
+          <button
+            type="button"
+            onClick={handleFinishMission}
+            style={{
+              padding: 'var(--space-1) var(--space-3)',
+              backgroundColor: isMissionFinished ? 'var(--sage)' : 'var(--hmi-surface-elevated)',
+              color: isMissionFinished ? 'var(--color-basalt)' : 'var(--hmi-text)',
+              border: '1px solid var(--hmi-border)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-detail)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              borderRadius: 'var(--r-0)',
+            }}
+          >
+            {isMissionFinished ? 'VIEW MISSION REPORT →' : 'REVIEW REPORT'}
+          </button>
+        </div>
       </header>
 
-      {/* Telemetry Ribbon with all states (loading skeleton, live timestamp, stale indicator) */}
+      {/* Level 1: Fleet Overview & Primary Telemetry */}
+      <section aria-label="Level 1 Mission Overview">
+        <L1MissionOverview currentStep={currentStep} totalDays={totalDays} />
+      </section>
+
+      {/* Sol Scrub Slider / Timeline Bar */}
       <div
-        className="tabular-nums"
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 'var(--space-2)',
-          backgroundColor: 'var(--basalt-2)',
-          border: '1px solid var(--rule)',
-          padding: 'var(--space-1) var(--space-3)',
-          marginBottom: 'var(--space-2)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 'var(--fs-detail)',
-          color: 'var(--ink-dim)',
-          minHeight: '28px',
+          gap: 'var(--space-3)',
+          backgroundColor: 'var(--hmi-surface)',
+          border: '1px solid var(--hmi-border)',
+          borderRadius: 'var(--r-1)',
+          padding: 'var(--space-2) var(--space-3)',
         }}
       >
-        {telemetryState === 'loading' ? (
-          <div style={{ color: 'var(--ink-dim)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ color: 'var(--ember)' }}>[TELEMETRY SYNC]</span> Querying NASA Horizons & NOAA SWPC Gateway...
-          </div>
-        ) : telemetryState === 'offline' || !realtimeData?.marsEphemeris ? (
-          <>
-            <div>
-              <span style={{ color: 'var(--ink-dim)', fontWeight: 600 }}>[OFFLINE MODEL]:</span> Mars Range 225.0M km | 1-Way Latency: 12.5m (Simulated Orbit)
-            </div>
-            <div>
-              Space Weather: <span style={{ color: 'var(--sage)' }}>Kp 2 (QUIET BASELINE)</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <span style={{ color: telemetryState === 'stale' ? 'var(--caution)' : 'var(--ember)', fontWeight: 600 }}>
-                {telemetryState === 'stale' ? '[CACHED TELEMETRY]:' : '[LIVE NASA/JPL TELEMETRY]:'}
-              </span>{' '}
-              Range {realtimeData.marsEphemeris.distMillionKm}M km | 1-Way Comms Latency:{' '}
-              <strong style={{ color: 'var(--ink)' }}>{realtimeData.marsEphemeris.signalDelayFormatted}</strong>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <span>
-                Space Weather:{' '}
-                <span
-                  style={{
-                    color:
-                      realtimeData.level === 'storm'
-                        ? 'var(--alarm)'
-                        : realtimeData.level === 'active'
-                        ? 'var(--caution)'
-                        : 'var(--sage)',
-                    fontWeight: 600,
-                  }}
-                >
-                  Kp {realtimeData.kIndex} ({realtimeData.level.toUpperCase()})
-                </span>
-              </span>
-              {realtimeData.timestamp && (
-                <span style={{ color: 'var(--ink-dim)', fontSize: 'var(--fs-caption)' }}>
-                  [{realtimeData.timestamp.slice(11, 16)} UTC]
-                </span>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Clock and Simulation Speed Rail */}
-      <div style={{ marginBottom: 'var(--space-3)' }}>
-        <SolClock
-          currentSol={simulationState.sol}
-          maxSols={simulationState.maxSols}
-          speed={simSpeed}
-          isPausedForEvent={simulationState.status === 'paused_event'}
-          onSetSpeed={setSimSpeed}
-          onSkipToEvent={handleSkipToEvent}
-        />
-      </div>
-
-      {/* Mobile Tab Switcher (< 768px viewports) */}
-      <div
-        className="mobile-tab-bar"
-        style={{
-          display: 'none',
-          gap: 'var(--space-2)',
-          marginBottom: 'var(--space-3)',
-        }}
-      >
-        <Button
-          variant={activeMobileTab === 'cutaway' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveMobileTab('cutaway')}
-        >
-          Habitat Cutaway
-        </Button>
-        <Button
-          variant={activeMobileTab === 'meters' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveMobileTab('meters')}
-        >
-          System Meters
-        </Button>
-        <Button
-          variant={activeMobileTab === 'log' ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setActiveMobileTab('log')}
-        >
-          Mission Log
-        </Button>
-      </div>
-
-      {/* Mission Concluded Banner */}
-      {isConcluded && (
-        <div
-          style={{
-            backgroundColor: isCompleted ? 'var(--basalt-2)' : 'var(--alarm-dark)',
-            border: `2px solid ${isCompleted ? 'var(--sage)' : 'var(--alarm)'}`,
-            borderRadius: 'var(--r-1)',
-            padding: 'var(--space-4)',
-            marginBottom: 'var(--space-4)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 'var(--space-3)',
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', whiteSpace: 'nowrap' }}>
+          TIMELINE SCRUBBER:
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={coupledOutput.dailyResults.length - 1}
+          value={activeSolIndex}
+          onChange={(e) => {
+            setSimSpeed(0);
+            jumpToCoupledSol(Number(e.target.value));
           }}
-        >
-          <div>
-            <span
-              style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: 'var(--fs-label)',
-                color: isCompleted ? 'var(--sage)' : 'var(--alarm)',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                fontWeight: 700,
-              }}
-            >
-              MISSION LIFECYCLE CONCLUDED
-            </span>
-            <h2
-              style={{
-                fontFamily: 'var(--font-condensed)',
-                fontSize: 'var(--fs-lead)',
-                margin: '2px 0 0 0',
-                color: 'var(--ink)',
-              }}
-            >
-              {simulationState.endCondition?.headline}
-            </h2>
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--fs-label)',
-                color: 'var(--ink-dim)',
-                margin: '4px 0 0 0',
-              }}
-            >
-              {simulationState.endCondition?.primaryCause}
-            </p>
-          </div>
-
-          <Button
-            id="view-report-btn"
-            variant="primary"
-            size="lg"
-            onClick={() => router.push('/report')}
-          >
-            VIEW FULL MISSION REPORT & CAUSE CHAIN &rarr;
-          </Button>
-        </div>
-      )}
-
-      {/* Main 3-Column Desktop / Responsive Layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1.1fr)',
-          gap: 'var(--space-4)',
-          marginBottom: 'var(--space-4)',
-        }}
-      >
-        {/* Left Column: Hand-drawn Habitat Cutaway Visual */}
-        <div>
-          <HabitatCutaway state={simulationState} />
-        </div>
-
-        {/* Right Column: Gauges Rail & Telemetry */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <MeterRail state={simulationState} />
-          <MissionLog state={simulationState} />
-        </div>
+          style={{ flex: 1 }}
+        />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text)', whiteSpace: 'nowrap' }}>
+          DAY {currentStep.day} / {totalDays}
+        </span>
       </div>
 
-      {/* Slide-Up Event Sheet Modal (When paused for event) */}
-      {simulationState.status === 'paused_event' && simulationState.pendingEvent && (
-        <EventSheet
-          event={simulationState.pendingEvent}
-          state={simulationState}
-          onSelectChoice={(choiceId) => advanceSol(choiceId)}
+      {/* Level 2: Subsystem Switcher Tabs */}
+      <nav
+        aria-label="Level 2 Subsystems"
+        style={{
+          display: 'flex',
+          gap: 'var(--space-2)',
+          borderBottom: '1px solid var(--hmi-border)',
+          paddingBottom: 'var(--space-1)',
+          overflowX: 'auto',
+        }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              type="button"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: 'var(--space-2) var(--space-3)',
+                backgroundColor: isActive ? 'var(--hmi-surface-elevated)' : 'transparent',
+                border: isActive ? '2px solid var(--ember)' : '1px solid var(--hmi-border)',
+                borderRadius: 'var(--r-1)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-condensed)',
+                fontSize: 'var(--fs-body)',
+                fontWeight: isActive ? 700 : 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'var(--hmi-text)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Active Level 2 Subsystem View */}
+      <main style={{ flex: 1 }}>
+        {activeTab === 'water' && <L2WaterLoopView currentStep={currentStep} />}
+        {activeTab === 'air' && <L2AirLoopView currentStep={currentStep} />}
+        {activeTab === 'nutrition' && <L2NutritionView currentStep={currentStep} />}
+        {activeTab === 'stowage' && <L2VehicleStowageView currentStep={currentStep} />}
+        {activeTab === 'reliability' && <L2ReliabilitySparesView currentStep={currentStep} />}
+      </main>
+
+      {/* Level 3 Diagnostics Drawer */}
+      {showDiagnostics && (
+        <L3DiagnosticsDrawer
+          currentStep={currentStep}
+          onClose={() => setShowDiagnostics(false)}
         />
       )}
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .mobile-tab-bar {
-            display: flex !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

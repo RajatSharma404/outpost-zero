@@ -82,3 +82,4 @@ export function calculateCo2PerformancePenalty(ppMmHg: number): number {
   const excess = ppMmHg - limit;
   return Math.max(0.4, 1.0 - excess * 0.08);
 }
+

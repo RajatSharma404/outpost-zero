@@ -160,3 +160,4 @@ export interface SimulationOutput {
   totalSparesUsed: number;
   summary: string;
 }
+

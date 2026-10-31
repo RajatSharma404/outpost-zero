@@ -401,3 +401,4 @@ export function runFullSimulation(config: SimulationConfig): SimulationOutput {
       : failureReason || vehicleFeasibility.violations.join('; '),
   };
 }
+

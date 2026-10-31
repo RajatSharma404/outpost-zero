@@ -110,3 +110,4 @@ export function calculateBreakEvenCurves(
     summary: `For ${crewCount} crew, all-stored open-loop is lightest for short missions (<${breakEvenDayStoredVsRecycling} days). Beyond ~180 days (standard Mars transit), the mixed architecture (recycling + 30-day emergency buffer) dominates, balancing payload mass savings against mission abort resilience.`,
   };
 }
+

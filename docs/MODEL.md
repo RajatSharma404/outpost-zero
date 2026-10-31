@@ -118,3 +118,4 @@ A mission architecture is valid if and only if all three physical constraints ar
    - $\text{NHV} / \text{Crew} \ge 11.3\text{ m}^3$ (Woolford & Bond Emergency Minimum)
    - $\text{NHV} / \text{Crew} \ge 20.0\text{ m}^3$ (Optimal 6-month Performance)
    - $\text{NHV} / \text{Crew} \ge 25.0\text{ m}^3$ (NASA SME Multi-Year Mission Standard)
+

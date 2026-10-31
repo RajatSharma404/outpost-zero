@@ -42,6 +42,22 @@
   --color-event-highlight: #7A6455;
   --color-fail-bg: #261410;
 
+  --color-hmi-bg-light: #E0E0E0;
+  --color-hmi-surface-light: #EAEAEA;
+  --color-hmi-elevated-light: #F4F4F4;
+  --color-hmi-border-light: #B0B0B0;
+  --color-hmi-text-light: #141414;
+  --color-hmi-text-dim-light: #505050;
+
+  --color-tier-req: #5B8CA8;
+  --color-tier-obs: #8FB38A;
+  --color-tier-study: #E9C46A;
+  --color-tier-student: #D9622B;
+
+  --color-alarm-p1: #D32F2F;
+  --color-alarm-p2: #F57C00;
+  --color-alarm-p3: #FBC02D;
+
   --font-condensed: var(--font-barlow-condensed), "Barlow Condensed", "Arial Narrow", sans-serif;
   --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
   --font-serif: var(--font-source-serif), "Source Serif 4", Georgia, serif;
@@ -100,13 +116,18 @@
   --fs-caption: 10px;
   --fs-detail: 11px;
   --fs-label: 12px;
+  --fs-xs: 13px;
+  --fs-sm: 14px;
   --fs-body: 16px;
+  --fs-sublead: 18px;
   --fs-lead: 20px;
   --fs-gauge: 36px;
   --fs-numeral: 48px;
   --fs-giant: 56px;
   --fs-display: clamp(40px, 8vw, 112px);
 
+  --space-quarter: 1px;
+  --space-half: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -116,10 +137,51 @@
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  --tier-req: #5B8CA8;
+  --tier-obs: #8FB38A;
+  --tier-study: #E9C46A;
+  --tier-student: #D9622B;
+
+  --alarm-p1: #D32F2F;
+  --alarm-p2: #F57C00;
+  --alarm-p3: #FBC02D;
+  --alarm-p1-bg: #401010;
+  --alarm-p2-bg: #3B240B;
+  --alarm-p3-bg: #383010;
+
+  /* ISA-101 HMI dynamic surface bindings (default: basalt night) */
+  --hmi-bg: var(--basalt);
+  --hmi-surface: var(--basalt-2);
+  --hmi-surface-elevated: var(--hab-inner);
+  --hmi-border: var(--rule);
+  --hmi-text: var(--ink);
+  --hmi-text-dim: var(--ink-dim);
+  --hmi-track: var(--hab-inner);
+  --hmi-fill: var(--ink-dim);
+  --hmi-nominal: #4A4A4A;
 
   --r-0: 0px;
   --r-1: 2px;
   --touch-min: 44px;
+}
+
+[data-theme="day"] {
+  --hmi-bg: #E0E0E0;
+  --hmi-surface: #EAEAEA;
+  --hmi-surface-elevated: #F4F4F4;
+  --hmi-border: #B0B0B0;
+  --hmi-text: #141414;
+  --hmi-text-dim: #505050;
+  --hmi-track: #D2D2D2;
+  --hmi-fill: #3A3A3A;
+  --basalt: #E0E0E0;
+  --basalt-2: #EAEAEA;
+  --ink: #141414;
+  --ink-dim: #505050;
+  --rule: #B0B0B0;
 }
 
 body {
