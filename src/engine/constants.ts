@@ -1387,6 +1387,17 @@ export const CONSTANTS_REGISTRY: Record<string, ConstantEntry<any>> = {
   // ==========================================
   // 9. RADIATION ENVIRONMENT & LIMITS
   // ==========================================
+  surface_radiation_dose_msv_per_sol: {
+    id: 'surface_radiation_dose_msv_per_sol',
+    name: 'Mars Surface Cosmic Ray Dose Rate',
+    value: 0.67,
+    unit: 'mSv/sol',
+    tier: 'OBS',
+    source: 'Curiosity MSL RAD Surface Telemetry (Hassler et al., Science 2014)',
+    confidence: 'HIGH',
+    definition: 'Measured galactic cosmic ray surface dose rate on Mars under nominal atmosphere.',
+    category: 'radiation',
+  },
   gcr_cruise_dose_rate_msv_per_day: {
     id: 'gcr_cruise_dose_rate_msv_per_day',
     name: 'Galactic Cosmic Ray Cruise Dose Rate',
