@@ -183,3 +183,4 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
     </div>
   );
 }
+

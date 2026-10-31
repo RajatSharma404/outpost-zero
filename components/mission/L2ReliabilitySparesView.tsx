@@ -175,3 +175,4 @@ export function L2ReliabilitySparesView({ currentStep }: L2ReliabilitySparesView
     </div>
   );
 }
+

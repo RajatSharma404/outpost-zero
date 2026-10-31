@@ -300,3 +300,4 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
     </div>
   );
 }
+

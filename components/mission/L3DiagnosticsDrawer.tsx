@@ -197,3 +197,4 @@ export function L3DiagnosticsDrawer({ currentStep, onClose }: L3DiagnosticsDrawe
     </div>
   );
 }
+

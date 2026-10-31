@@ -388,3 +388,4 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
     </div>
   );
 }
+
