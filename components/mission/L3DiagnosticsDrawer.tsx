@@ -125,6 +125,78 @@ export function L3DiagnosticsDrawer({ currentStep, onClose }: L3DiagnosticsDrawe
           <div>Error Rate: <strong style={{ color: audit.withinTolerance ? 'var(--sage)' : 'var(--alarm-p1)' }}>{audit.errorPct.toFixed(2)}%</strong></div>
         </div>
 
+        {/* Per-Term Independently Tracked Ledgers Table */}
+        {audit.terms && (
+          <div style={{ marginTop: 'var(--space-2)', borderTop: '1px solid var(--hmi-border)', paddingTop: 'var(--space-2)' }}>
+            <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-caption)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--hmi-text-dim)', display: 'block', marginBottom: 'var(--space-1)' }}>
+              Independently Summed Physical Stream Ledgers (No Plug Numbers)
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+              {/* Inputs Column */}
+              <div style={{ backgroundColor: 'var(--hmi-track)', padding: 'var(--space-2)', borderRadius: 'var(--r-0)' }}>
+                <div style={{ fontWeight: 700, color: 'var(--hmi-text)', marginBottom: 'var(--space-1)', borderBottom: '1px solid var(--hmi-border)', paddingBottom: '2px' }}>
+                  INPUT STREAMS ({audit.inputsKg.toFixed(3)} kg)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• O2 Consumed:</span>
+                  <span>{audit.terms.inputs.o2ConsumedKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Dry Food:</span>
+                  <span>{audit.terms.inputs.dryFoodKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Food Moisture:</span>
+                  <span>{audit.terms.inputs.foodMoistureKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Drinking Fluid:</span>
+                  <span>{audit.terms.inputs.drinkingWaterKg.toFixed(3)} kg</span>
+                </div>
+              </div>
+
+              {/* Outputs Column */}
+              <div style={{ backgroundColor: 'var(--hmi-track)', padding: 'var(--space-2)', borderRadius: 'var(--r-0)' }}>
+                <div style={{ fontWeight: 700, color: 'var(--hmi-text)', marginBottom: 'var(--space-1)', borderBottom: '1px solid var(--hmi-border)', paddingBottom: '2px' }}>
+                  OUTPUT STREAMS ({audit.outputsKg.toFixed(3)} kg)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Exhaled CO2:</span>
+                  <span>{audit.terms.outputs.co2ExhaledKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Respiration Vapor:</span>
+                  <span>{audit.terms.outputs.respirationVaporKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Perspiration Sweat:</span>
+                  <span>{audit.terms.outputs.perspirationSweatKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Urine Water:</span>
+                  <span>{audit.terms.outputs.urineWaterKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Urine Solids:</span>
+                  <span>{audit.terms.outputs.urineSolidsKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Feces Water:</span>
+                  <span>{audit.terms.outputs.fecesWaterKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Feces Solids:</span>
+                  <span>{audit.terms.outputs.fecesSolidsKg.toFixed(3)} kg</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--hmi-text)' }}>
+                  <span>• Shed Solids:</span>
+                  <span>{audit.terms.outputs.shedSolidsKg.toFixed(3)} kg</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', borderTop: '1px solid var(--hmi-border)', paddingTop: 'var(--space-1)' }}>
           Physical Law: Σ Inputs (O2 + Food + Ingested Water) = Σ Outputs (CO2 + Urine + Respiration Vapor + Sweat + Feces + Solids). Tolerance threshold: 2.0%.
         </div>
