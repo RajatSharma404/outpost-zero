@@ -98,6 +98,7 @@ export interface CrewDailyStatus {
   metabolicMj: number;
   bodyMassKg: number;
   boneDensityIndex: number; // 1.0 nominal baseline, degrades over time
+  performanceIndex: number; // 1.0 nominal, decreases under hypercapnia
   vitaminCCoveragePct: number;
   thiaminCoveragePct: number;
   calciumCoveragePct: number;
@@ -124,6 +125,25 @@ export interface DailyStepResult {
   potableWaterRemainingKg: number;
   o2RemainingKg: number;
   foodRemainingKg: number;
+  // Coupled telemetry & single-source-of-truth variables:
+  dailyCrewO2DemandKg: number;
+  dailyCrewCo2ExhaledKg: number;
+  dailyCrewDrinkingWaterKg: number;
+  dailyCrewUrineProducedKg: number;
+  dailyCrewVaporProducedKg: number;
+  dailyCrewSweatProducedKg: number;
+  co2OverboardVentedKg: number;
+  sabatierWaterProducedKg: number;
+  dayMethaneVentedKg: number;
+  ventedCarbonKg: number;
+  netWaterDepletionRateKgPerDay: number;
+  netO2DepletionRateKgPerDay: number;
+  waterDaysUntilLimit: number;
+  o2DaysUntilLimit: number;
+  waterMarginDays: number;
+  waterMarginPct: number;
+  o2MarginDays: number;
+  o2MarginPct: number;
 }
 
 export interface SimulationConfig {

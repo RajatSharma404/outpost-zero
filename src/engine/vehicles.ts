@@ -31,7 +31,7 @@ export const VEHICLE_PRESETS: Record<string, Vehicle> = {
     systemsVolumeM3: 104.0,
     maxStandaloneDurationDays: 1200,
     sourceTier: 'STUDY',
-    sourceCitation: 'Defining Required NHV for Long-Duration Exploration (NTRS 20200002973)',
+    sourceCitation: 'NTRS 20200002973 (Mars Transit Habitat concept, STUDY)',
   },
   nasa_hab_2011: {
     id: 'nasa_hab_2011',
@@ -109,6 +109,8 @@ export function evaluateVehicleFeasibility(
   totalCargoMassKg: number,
   requiredStowageVolumeM3: number,
   subsystemsVolumeM3 = 0,
+  scrubberCapacityKgPerDay?: number,
+  totalCrewCo2ProductionKgPerDay?: number,
 ): VehicleFeasibilityResult {
   const violations: string[] = [];
   let isFeasible = true;
@@ -199,6 +201,17 @@ export function evaluateVehicleFeasibility(
     ? Math.floor(vehicle.massCapacityKg / dailyConsumableMassApprox)
     : 1000;
 
+  // 5. Scrubber Safety Margin Check: Installed capacity must be >= 1.25x crew CO2 production
+  if (scrubberCapacityKgPerDay !== undefined && totalCrewCo2ProductionKgPerDay !== undefined) {
+    const requiredCapacity = totalCrewCo2ProductionKgPerDay * 1.25;
+    if (scrubberCapacityKgPerDay < requiredCapacity) {
+      violations.push(
+        `CO2 scrubber capacity (${scrubberCapacityKgPerDay.toFixed(2)} kg/d) is below safety margin of 1.25x crew production (${requiredCapacity.toFixed(2)} kg/d required). Risk of cabin CO2 runaway.`
+      );
+      isFeasible = false;
+    }
+  }
+
   return {
     isFeasible,
     bindingConstraint,
@@ -210,4 +223,19 @@ export function evaluateVehicleFeasibility(
     maxDaysForCrew: Math.min(maxDaysForCrew, vehicle.maxStandaloneDurationDays || 1200),
     violations,
   };
+}
+
+/**
+ * Checks whether installed scrubber capacity satisfies the >= 1.25x crew production safety margin.
+ */
+export function validateScrubberCapacity(
+  scrubberCapacityKgPerDay: number,
+  crewCo2ProductionKgPerDay: number,
+): { isSufficient: boolean; marginRatio: number; message?: string } {
+  const marginRatio = crewCo2ProductionKgPerDay > 0 ? scrubberCapacityKgPerDay / crewCo2ProductionKgPerDay : Infinity;
+  const isSufficient = marginRatio >= 1.25;
+  const message = isSufficient
+    ? undefined
+    : `Scrubber capacity (${scrubberCapacityKgPerDay.toFixed(2)} kg/d) is below 1.25x safety margin of crew production (${crewCo2ProductionKgPerDay.toFixed(2)} kg/d). Required: ${(1.25 * crewCo2ProductionKgPerDay).toFixed(2)} kg/d.`;
+  return { isSufficient, marginRatio, message };
 }

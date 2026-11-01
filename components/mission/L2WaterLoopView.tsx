@@ -14,16 +14,17 @@ export function L2WaterLoopView({ currentStep }: L2WaterLoopViewProps) {
   const hasBpa = coupledConfig.eclssUnits.some((u) => u.id === 'eclss_bpa');
 
   const crewCount = crew.length;
-  const drinkingPrepPerDay = crewCount * 2.5;
+  // Single source of truth from coupled engine telemetry
+  const drinkingPrepPerDay = currentStep.dailyCrewDrinkingWaterKg;
   const hygienePerDay = crewCount * 0.4;
   const flushPerDay = crewCount * 0.3;
   const totalWaterInKg = drinkingPrepPerDay + hygienePerDay + flushPerDay;
 
-  const urineWaterKg = crewCount * 1.84;
-  const vaporWaterKg = crewCount * 2.38;
-  const sweatWaterKg = crewCount * 0.32;
+  const urineWaterKg = currentStep.dailyCrewUrineProducedKg;
+  const vaporWaterKg = currentStep.dailyCrewVaporProducedKg;
+  const sweatWaterKg = currentStep.dailyCrewSweatProducedKg;
   const fecesWaterKg = crewCount * 0.09;
-  const wastewaterKg = urineWaterKg + vaporWaterKg + sweatWaterKg;
+  const wastewaterKg = urineWaterKg + vaporWaterKg + sweatWaterKg + hygienePerDay + flushPerDay;
 
   const recoveryEfficiency = hasBpa ? 0.98 : 0.935;
   const recoveredPotableKg = wastewaterKg * recoveryEfficiency;
@@ -220,7 +221,7 @@ export function L2WaterLoopView({ currentStep }: L2WaterLoopViewProps) {
               <td style={{ padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>Potable Water Ingestion (Drinking + Food Rehydration)</td>
               <td style={{ textAlign: 'right', padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>{drinkingPrepPerDay.toFixed(2)}</td>
               <td style={{ textAlign: 'right', padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>2.50</td>
-              <td style={{ padding: 'var(--space-2)', color: 'var(--tier-req)' }}>NASA-STD-3001 Vol 2</td>
+              <td style={{ padding: 'var(--space-2)', color: 'var(--tier-obs)' }}>BVAD Table 4-20</td>
             </tr>
             <tr style={{ borderBottom: '1px solid var(--hmi-border)' }}>
               <td style={{ padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>Hygiene & Urinal Flush Water Draw</td>

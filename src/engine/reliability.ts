@@ -35,7 +35,8 @@ export function evaluateUnitFailures(
 
     // If unit is currently under repair, decrement repair time
     if (unit.status === 'failed') {
-      if (unit.offlineHours >= unit.repairCrewHours) {
+      const accumulatedHours = unit.offlineHours + 24;
+      if (accumulatedHours >= unit.repairCrewHours) {
         // Repair complete!
         events.push({
           unitId: unit.id,
@@ -51,7 +52,7 @@ export function evaluateUnitFailures(
           offlineHours: 0,
         };
       } else {
-        return { ...unit, offlineHours: unit.offlineHours + 24 };
+        return { ...unit, offlineHours: accumulatedHours };
       }
     }
 

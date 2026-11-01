@@ -17,15 +17,16 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
   const hasBosch = coupledConfig.eclssUnits.some((u) => u.id === 'eclss_bosch');
   const hasPlants = coupledConfig.eclssUnits.some((u) => u.id === 'eclss_plants');
 
-  const o2ConsumedPerDay = crewCount * 0.84;
-  const co2ExhaledPerDay = crewCount * 1.02;
-
-  // Stoichiometry
-  const h2ProducedFromO2Electrolysis = o2ConsumedPerDay * (4.032 / 31.998); // 0.126 kg H2 / kg O2
-  const sabatierCo2Reacted = hasSabatier ? Math.min(co2ExhaledPerDay, h2ProducedFromO2Electrolysis * (44.01 / 16.128)) : 0;
-  const ch4Vented = hasSabatier ? sabatierCo2Reacted * (16.04 / 44.01) : 0;
-  const waterRecoveredFromSabatier = hasSabatier ? sabatierCo2Reacted * (36.03 / 44.01) : 0;
-  const emergentO2RecoveryPct = hasBosch ? 98.0 : hasSabatier ? 47.5 : 0.0;
+  // Single source of truth read directly from simulation telemetry
+  const o2ConsumedPerDay = currentStep.dailyCrewO2DemandKg;
+  const co2ExhaledPerDay = currentStep.dailyCrewCo2ExhaledKg;
+  const h2ProducedFromO2Electrolysis = o2ConsumedPerDay * (4.032 / 31.998);
+  const waterRecoveredFromSabatier = currentStep.sabatierWaterProducedKg;
+  const ch4Vented = currentStep.dayMethaneVentedKg;
+  const co2OverboardVented = currentStep.co2OverboardVentedKg;
+  const emergentO2RecoveryPct = o2ConsumedPerDay > 0
+    ? (waterRecoveredFromSabatier * (31.998 / 36.03) / o2ConsumedPerDay) * 100
+    : 0;
 
   const ppCo2 = currentStep.ppCo2MmHg;
   const hoursToLimit = currentStep.hoursToCo2Limit;
@@ -118,7 +119,7 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
             gap: 'var(--space-1)',
           }}
         >
-          <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--tier-req)' }}>
+          <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
             O2 DEMAND & ELECTROLYSIS
           </span>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--hmi-text)' }}>
@@ -148,11 +149,11 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--sage)' }}>
+            <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
               SABATIER CO2 REDUCTION
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--caution)', fontWeight: 700 }}>
-              [{emergentO2RecoveryPct.toFixed(1)}% O2 CAP]
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: emergentO2RecoveryPct > 45 ? 'var(--hmi-text-dim)' : 'var(--alarm-p2)', fontWeight: 700 }}>
+              [{emergentO2RecoveryPct.toFixed(1)}% O2 RECOVERY]
             </span>
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--hmi-text)' }}>
@@ -161,8 +162,11 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--hmi-text-dim)' }}>
             Sabatier Water Recovered: +{waterRecoveredFromSabatier.toFixed(2)} kg/day
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--alarm-p2)' }}>
-            Methane (CH4) Vented Loss: -{ch4Vented.toFixed(2)} kg/day
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--hmi-text-dim)' }}>
+            Methane (CH4) Vented: -{ch4Vented.toFixed(2)} kg/day
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-detail)', color: 'var(--hmi-text-dim)' }}>
+            Overboard CO2 Vented: -{co2OverboardVented.toFixed(2)} kg/day
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', borderTop: '1px solid var(--hmi-border)', paddingTop: 'var(--space-1)', marginTop: 'var(--space-1)' }}>
             Reaction: CO2 + 4 H2 → CH4 (vented) + 2 H2O
@@ -182,10 +186,10 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--ember)' }}>
+            <span style={{ fontFamily: 'var(--font-condensed)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
               CARBON ATOM LEDGER
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--sage)', fontWeight: 700 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', fontWeight: 700 }}>
               [{carbonLedger.carbonClosurePct.toFixed(1)}% RECYCLED]
             </span>
           </div>
@@ -261,19 +265,34 @@ export function L2AirLoopView({ currentStep }: L2AirLoopViewProps) {
             strokeWidth="2.5"
           />
 
-          {/* Current Operating Point Marker */}
+          {/* Current Operating Point Marker with Off-Scale Indicator */}
           {(() => {
+            const isOffScale = ppCo2 > 8.0;
             const clampPpCo2 = Math.min(8.0, Math.max(0, ppCo2));
             const x = 50 + (clampPpCo2 / 8.0) * 520;
-            // approximate performance y
             let perf = 1.0;
             if (clampPpCo2 > 2.0) {
-              perf = 1.0 - Math.min(0.9, Math.pow((clampPpCo2 - 2.0) / 4.0, 1.8));
+              perf = Math.max(0.1, 1.0 - Math.min(0.9, Math.pow((clampPpCo2 - 2.0) / 4.0, 1.8)));
             }
             const y = 140 - perf * 120;
+
+            if (isOffScale) {
+              return (
+                <g>
+                  {/* Off-scale marker at the right boundary */}
+                  <line x1="570" y1="20" x2="570" y2="140" stroke="var(--alarm-p1)" strokeWidth="2.5" />
+                  <polygon points="565,60 575,65 565,70" fill="var(--alarm-p1)" />
+                  <rect x="420" y="45" width="145" height="24" rx="2" fill="var(--alarm-p1)" />
+                  <text x="492" y="61" textAnchor="middle" fill="var(--color-basalt)" fontSize="10" fontWeight="bold" fontFamily="monospace">
+                    ▶ OFF-SCALE [{ppCo2.toFixed(1)} mmHg]
+                  </text>
+                </g>
+              );
+            }
+
             return (
               <g>
-                <circle cx={x} cy={y} r="5" fill="var(--alarm-p1)" stroke="var(--ink)" strokeWidth="1.5" />
+                <circle cx={x} cy={y} r="5" fill={ppCo2 > 3.0 ? 'var(--alarm-p1)' : 'var(--sage)'} stroke="var(--ink)" strokeWidth="1.5" />
                 <text x={x} y={y - 10} textAnchor="middle" fill="var(--hmi-text)" fontSize="10" fontWeight="bold" fontFamily="monospace">
                   Current: {ppCo2.toFixed(1)} mmHg ({(perf * 100).toFixed(0)}%)
                 </text>

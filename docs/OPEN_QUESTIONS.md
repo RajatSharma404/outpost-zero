@@ -21,6 +21,9 @@
 | **`surface_radiation_dose_msv_per_sol`** | `0.67 mSv/sol` | STUDENT | LOW | Surface cosmic ray dose rate under unshielded atmospheric conditions (to be further sourced from surface lander studies). |
 | **`radiation_shielding_diminishing_exponent`** | `0.65` | STUDENT | LOW | Power-law diminishing returns exponent for passive regolith/polyethylene mass attenuation. |
 | **`ppco2_cognitive_impairment_slope`** | `0.08 / mmHg` | STUDENT | LOW | Empirical curve modeling cognitive friction and task completion slowdown above the 3.0 mmHg 1-hour average limit. |
+| **`ppco2_incapacitation_limit_mmhg`** | `15.0 mmHg` | STUDENT | LOW | Threshold above which acute severe hypercapnia results in loss of crew consciousness and mission termination. |
+| **`thiamin_depletion_threshold_pct`** | `60.0%` | STUDENT | LOW | Retention percentage below which thiamin deficiency is flagged as abnormal with operational impact. |
+| **`eclss_failure_calibration_target_loc_pct`** | `10.0%` | STUDENT | LOW | Target calibration probability of unrecoverable life-support failure for mature flight architecture with 2-3 spares over 577 days (based on NASA Ames Jones sparing methodology). |
 | **`eclss_unlisted_mtbf_default_hours`** | `5,000 hrs` | STUDENT | LOW | Default MTBF applied to auxiliary pumps, valves, and sensors lacking explicit historical flight failure data. |
 
 ---

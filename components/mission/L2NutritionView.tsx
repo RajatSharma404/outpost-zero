@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useGameStore } from '../../store/game';
+import { getConstant } from '../../src/engine';
 import type { DailyStepResult } from '../../src/engine';
 
 interface L2NutritionViewProps {
@@ -18,15 +19,15 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
   const totalStorageMonths = coupledConfig.predeployedFoodLeadTimeMonths + missionDay / 30.4;
 
   // Nutrient retention kinetics (ambient storage degradation):
-  // Thiamin (B1): loses ~2.5% per month
-  // Vitamin C: loses ~3.0% per month
   const thiaminRetentionPct = Math.max(25, 100 * Math.pow(0.975, totalStorageMonths));
   const vitaminCRetentionPct = Math.max(20, 100 * Math.pow(0.970, totalStorageMonths));
+  const thiaminDepletionThreshold = getConstant<number>('thiamin_depletion_threshold_pct') ?? 60.0;
+  const isThiaminDepleted = thiaminRetentionPct < thiaminDepletionThreshold;
 
-  // Microgravity / Hypogravity bone deconditioning: ~0.8% loss per month on surface (1.2% in cruise)
-  const isCruise = currentStep.phase !== 'surface';
-  const monthlyBoneLossRate = isCruise ? 0.012 : 0.006;
-  const boneDensityPct = Math.max(75, 100 * (1 - (missionDay / 30.4) * monthlyBoneLossRate));
+  // Derive average crew BMD directly from crewStatus so headline matches table
+  const avgCrewBmdPct = currentStep.crewStatus && currentStep.crewStatus.length > 0
+    ? (currentStep.crewStatus.reduce((acc, s) => acc + s.boneDensityIndex, 0) / currentStep.crewStatus.length) * 100
+    : 100;
 
   return (
     <div
@@ -87,7 +88,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
             borderRadius: 'var(--r-0)',
           }}
         >
-          MENU PROFILE: <strong style={{ color: 'var(--ember)' }}>{menuType.toUpperCase()}</strong>
+          MENU PROFILE: <strong style={{ color: 'var(--hmi-text)' }}>{menuType.toUpperCase()}</strong>
         </div>
       </div>
 
@@ -103,7 +104,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
         <div
           style={{
             backgroundColor: 'var(--hmi-surface-elevated)',
-            border: `1px solid ${thiaminRetentionPct < 60 ? 'var(--alarm-p2)' : 'var(--hmi-border)'}`,
+            border: `1px solid ${isThiaminDepleted ? 'var(--alarm-p2)' : 'var(--hmi-border)'}`,
             padding: 'var(--space-3)',
             borderRadius: 'var(--r-1)',
             display: 'flex',
@@ -119,7 +120,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-detail)',
-                color: thiaminRetentionPct < 60 ? 'var(--alarm-p2)' : 'var(--sage)',
+                color: isThiaminDepleted ? 'var(--alarm-p2)' : 'var(--hmi-text)',
                 fontWeight: 700,
               }}
             >
@@ -141,12 +142,12 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
               style={{
                 width: `${thiaminRetentionPct}%`,
                 height: '100%',
-                backgroundColor: thiaminRetentionPct < 60 ? 'var(--alarm-p2)' : 'var(--sage)',
+                backgroundColor: isThiaminDepleted ? 'var(--alarm-p2)' : 'var(--hmi-fill)',
               }}
             />
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-1)' }}>
-            RDA Target: 1.2 mg/d | Loss Rate: ~2.5%/month ambient storage
+            RDA Target: 1.2 mg/d | Depletion Limit: &lt; {thiaminDepletionThreshold}%
           </div>
         </div>
 
@@ -170,7 +171,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-detail)',
-                color: vitaminCRetentionPct < 50 ? 'var(--alarm-p1)' : 'var(--sage)',
+                color: vitaminCRetentionPct < 50 ? 'var(--alarm-p1)' : 'var(--hmi-text)',
                 fontWeight: 700,
               }}
             >
@@ -192,7 +193,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
               style={{
                 width: `${vitaminCRetentionPct}%`,
                 height: '100%',
-                backgroundColor: vitaminCRetentionPct < 50 ? 'var(--alarm-p1)' : 'var(--sage)',
+                backgroundColor: vitaminCRetentionPct < 50 ? 'var(--alarm-p1)' : 'var(--hmi-fill)',
               }}
             />
           </div>
@@ -205,7 +206,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
         <div
           style={{
             backgroundColor: 'var(--hmi-surface-elevated)',
-            border: `1px solid ${boneDensityPct < 85 ? 'var(--caution)' : 'var(--hmi-border)'}`,
+            border: `1px solid ${avgCrewBmdPct < 85 ? 'var(--caution)' : 'var(--hmi-border)'}`,
             padding: 'var(--space-3)',
             borderRadius: 'var(--r-1)',
             display: 'flex',
@@ -221,11 +222,11 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-detail)',
-                color: boneDensityPct < 85 ? 'var(--caution)' : 'var(--sage)',
+                color: avgCrewBmdPct < 85 ? 'var(--caution)' : 'var(--hmi-text)',
                 fontWeight: 700,
               }}
             >
-              {boneDensityPct.toFixed(1)}%
+              {avgCrewBmdPct.toFixed(1)}%
             </span>
           </div>
 
@@ -241,14 +242,14 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
           >
             <div
               style={{
-                width: `${boneDensityPct}%`,
+                width: `${avgCrewBmdPct}%`,
                 height: '100%',
-                backgroundColor: boneDensityPct < 85 ? 'var(--caution)' : 'var(--sage)',
+                backgroundColor: avgCrewBmdPct < 85 ? 'var(--caution)' : 'var(--hmi-fill)',
               }}
             />
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-1)' }}>
-            Weight-bearing deconditioning: -0.6% to -1.2%/month
+            Crew Average BMD: matches individual crew status profiles
           </div>
         </div>
       </div>
@@ -279,7 +280,7 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
                 eerKcal: 3000,
                 metabolicMj: 12.5,
                 bodyMassKg: cm.massKg,
-                boneDensityIndex: boneDensityPct / 100,
+                boneDensityIndex: avgCrewBmdPct / 100,
               };
               return (
                 <tr key={cm.id} style={{ borderBottom: '1px solid var(--hmi-border)' }}>
@@ -288,8 +289,8 @@ export function L2NutritionView({ currentStep }: L2NutritionViewProps) {
                   <td style={{ textAlign: 'right', padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>{status.metabolicMj.toFixed(2)}</td>
                   <td style={{ textAlign: 'right', padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>{status.bodyMassKg.toFixed(1)}</td>
                   <td style={{ textAlign: 'right', padding: 'var(--space-2)', color: 'var(--hmi-text)' }}>{(status.boneDensityIndex * 100).toFixed(1)}%</td>
-                  <td style={{ padding: 'var(--space-2)', color: 'var(--sage)' }}>
-                    {thiaminRetentionPct < 60 ? 'Thiamin Depleted' : 'Nominal Absorption'}
+                  <td style={{ padding: 'var(--space-2)', color: isThiaminDepleted ? 'var(--alarm-p2)' : 'var(--hmi-text)' }}>
+                    {isThiaminDepleted ? 'Thiamin Depleted' : 'Nominal Absorption'}
                   </td>
                 </tr>
               );

@@ -14,10 +14,23 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
   const { coupledConfig, audioMuted } = useGameStore();
   const crewCount = coupledConfig.crew.length;
 
-  // Derive days of supply remaining based on current daily consumption
-  const waterDaysRemaining = currentStep.potableWaterRemainingKg > 0 ? Math.floor(currentStep.potableWaterRemainingKg / (crewCount * 2.5)) : 0;
-  const o2DaysRemaining = currentStep.o2RemainingKg > 0 ? Math.floor(currentStep.o2RemainingKg / (crewCount * 0.84)) : 0;
-  const foodDaysRemaining = currentStep.foodRemainingKg > 0 ? Math.floor(currentStep.foodRemainingKg / (crewCount * 1.23)) : 0;
+  // Read net depletion rates and operating margins from engine step
+  const netWaterRate = currentStep.netWaterDepletionRateKgPerDay ?? 0;
+  const netO2Rate = currentStep.netO2DepletionRateKgPerDay ?? 0;
+  const waterMarginDays = currentStep.waterMarginDays ?? 999;
+  const waterMarginPct = currentStep.waterMarginPct ?? 100;
+  const o2MarginDays = currentStep.o2MarginDays ?? 999;
+  const o2MarginPct = currentStep.o2MarginPct ?? 100;
+  const waterDaysUntilLimit = currentStep.waterDaysUntilLimit ?? 9999;
+  const o2DaysUntilLimit = currentStep.o2DaysUntilLimit ?? 9999;
+
+  // Food margin calculation vs remaining mission + 30d open-loop backup
+  const remainingMissionDays = Math.max(0, totalDays - currentStep.day);
+  const requiredDaysWithBackup = remainingMissionDays + (coupledConfig.openLoopBackupDays || 30);
+  const dailyFoodBurnKg = Math.abs(currentStep.foodSurplusOrDeficitKg) || (crewCount * 1.83);
+  const foodDaysUntilLimit = Math.floor(currentStep.foodRemainingKg / dailyFoodBurnKg);
+  const foodMarginDays = foodDaysUntilLimit - requiredDaysWithBackup;
+  const foodMarginPct = Math.round((foodMarginDays / requiredDaysWithBackup) * 100);
 
   // Active alarms classification
   const criticalAlarms = currentStep.activeAlarms.filter((a) =>
@@ -83,7 +96,7 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
                 fontFamily: 'var(--font-condensed)',
                 fontSize: 'var(--fs-lead)',
                 fontWeight: 700,
-                color: 'var(--oxide)',
+                color: 'var(--hmi-text)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
               }}
@@ -170,11 +183,11 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
         </div>
       )}
 
-      {/* 4-Band Analog Operating Reserve Gauges */}
+      {/* 4-Band Analog Operating Reserve Gauges with Net Depletion & Mission Margin */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 'var(--space-2)',
         }}
       >
@@ -182,15 +195,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
         <div
           style={{
             backgroundColor: 'var(--hmi-surface-elevated)',
-            border: '1px solid var(--hmi-border)',
+            border: `1px solid ${waterMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-border)'}`,
             padding: 'var(--space-2)',
             borderRadius: 'var(--r-1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-detail)', fontFamily: 'var(--font-mono)' }}>
-            <span style={{ color: 'var(--hmi-text-dim)' }}>WATER SUPPLY</span>
-            <strong style={{ color: waterDaysRemaining < 10 ? 'var(--alarm-p1)' : 'var(--hmi-text)' }}>
-              {waterDaysRemaining} DAYS
+            <span style={{ color: 'var(--hmi-text-dim)' }}>WATER MARGIN</span>
+            <strong style={{ color: waterMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-text)' }}>
+              {waterMarginDays >= 999 ? '>999 d' : `${waterMarginDays} d`} ({waterMarginPct}%)
             </strong>
           </div>
           <div
@@ -205,15 +218,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
           >
             <div
               style={{
-                width: `${Math.min(100, (waterDaysRemaining / 60) * 100)}%`,
+                width: `${Math.min(100, Math.max(0, waterMarginDays >= 999 ? 100 : (waterMarginDays / 120) * 100))}%`,
                 height: '100%',
-                backgroundColor: waterDaysRemaining < 10 ? 'var(--alarm-p1)' : waterDaysRemaining < 30 ? 'var(--caution)' : 'var(--hmi-fill)',
+                backgroundColor: waterMarginDays < 0 ? 'var(--alarm-p1)' : waterMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-fill)',
               }}
             />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-quarter)' }}>
-            <span>{currentStep.potableWaterRemainingKg.toFixed(0)} kg</span>
-            <span>Target: &gt;30 d</span>
+            <span>Net: {netWaterRate.toFixed(2)} kg/d</span>
+            <span>Limit: {waterDaysUntilLimit >= 9999 ? 'Sustainable' : `${waterDaysUntilLimit} d`}</span>
           </div>
         </div>
 
@@ -221,15 +234,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
         <div
           style={{
             backgroundColor: 'var(--hmi-surface-elevated)',
-            border: '1px solid var(--hmi-border)',
+            border: `1px solid ${o2MarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-border)'}`,
             padding: 'var(--space-2)',
             borderRadius: 'var(--r-1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-detail)', fontFamily: 'var(--font-mono)' }}>
-            <span style={{ color: 'var(--hmi-text-dim)' }}>O2 INVENTORY</span>
-            <strong style={{ color: o2DaysRemaining < 10 ? 'var(--alarm-p1)' : 'var(--hmi-text)' }}>
-              {o2DaysRemaining} DAYS
+            <span style={{ color: 'var(--hmi-text-dim)' }}>O2 MARGIN</span>
+            <strong style={{ color: o2MarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-text)' }}>
+              {o2MarginDays >= 999 ? '>999 d' : `${o2MarginDays} d`} ({o2MarginPct}%)
             </strong>
           </div>
           <div
@@ -244,15 +257,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
           >
             <div
               style={{
-                width: `${Math.min(100, (o2DaysRemaining / 60) * 100)}%`,
+                width: `${Math.min(100, Math.max(0, o2MarginDays >= 999 ? 100 : (o2MarginDays / 120) * 100))}%`,
                 height: '100%',
-                backgroundColor: o2DaysRemaining < 10 ? 'var(--alarm-p1)' : o2DaysRemaining < 30 ? 'var(--caution)' : 'var(--hmi-fill)',
+                backgroundColor: o2MarginDays < 0 ? 'var(--alarm-p1)' : o2MarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-fill)',
               }}
             />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-quarter)' }}>
-            <span>{currentStep.o2RemainingKg.toFixed(0)} kg</span>
-            <span>Target: &gt;30 d</span>
+            <span>Net: {netO2Rate.toFixed(2)} kg/d</span>
+            <span>Limit: {o2DaysUntilLimit >= 9999 ? 'Sustainable' : `${o2DaysUntilLimit} d`}</span>
           </div>
         </div>
 
@@ -260,15 +273,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
         <div
           style={{
             backgroundColor: 'var(--hmi-surface-elevated)',
-            border: '1px solid var(--hmi-border)',
+            border: `1px solid ${foodMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-border)'}`,
             padding: 'var(--space-2)',
             borderRadius: 'var(--r-1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-detail)', fontFamily: 'var(--font-mono)' }}>
-            <span style={{ color: 'var(--hmi-text-dim)' }}>FOOD RATIONS</span>
-            <strong style={{ color: foodDaysRemaining < 10 ? 'var(--alarm-p1)' : 'var(--hmi-text)' }}>
-              {foodDaysRemaining} DAYS
+            <span style={{ color: 'var(--hmi-text-dim)' }}>FOOD MARGIN</span>
+            <strong style={{ color: foodMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-text)' }}>
+              {foodMarginDays} d ({foodMarginPct}%)
             </strong>
           </div>
           <div
@@ -283,15 +296,15 @@ export function L1MissionOverview({ currentStep, totalDays }: L1MissionOverviewP
           >
             <div
               style={{
-                width: `${Math.min(100, (foodDaysRemaining / 60) * 100)}%`,
+                width: `${Math.min(100, Math.max(0, (foodMarginDays / 120) * 100))}%`,
                 height: '100%',
-                backgroundColor: foodDaysRemaining < 10 ? 'var(--alarm-p1)' : foodDaysRemaining < 30 ? 'var(--caution)' : 'var(--hmi-fill)',
+                backgroundColor: foodMarginDays < 0 ? 'var(--alarm-p1)' : foodMarginDays < 30 ? 'var(--alarm-p2)' : 'var(--hmi-fill)',
               }}
             />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-quarter)' }}>
             <span>{currentStep.foodRemainingKg.toFixed(0)} kg</span>
-            <span>Target: &gt;30 d</span>
+            <span>Limit: {foodDaysUntilLimit} d</span>
           </div>
         </div>
 

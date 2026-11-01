@@ -20,6 +20,12 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
   const unallocatedM3 = Math.max(0, totalHullM3 - (systemsM3 + stowageM3 + nhvTotalM3));
   const nhvPerPerson = crewCount > 0 ? nhvTotalM3 / crewCount : 0;
 
+  // Exact 2D stacked bar volume fractions (proportional to total hull volume)
+  const nhvPct = (nhvTotalM3 / totalHullM3) * 100;
+  const systemsPct = (systemsM3 / totalHullM3) * 100;
+  const stowagePct = (stowageM3 / totalHullM3) * 100;
+  const unallocatedPct = (unallocatedM3 / totalHullM3) * 100;
+
   return (
     <div
       style={{
@@ -54,7 +60,7 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
               fontWeight: 700,
             }}
           >
-            L2 Subsystem: Vehicle Habitation & Volume Stowage Cube
+            L2 Subsystem: Vehicle Habitation & Volume Allocation
           </span>
           <span
             style={{
@@ -65,7 +71,7 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
               marginTop: 'var(--space-quarter)',
             }}
           >
-            Pressurized hull geometry ({totalHullM3} m³): Systems, Stowage, and Net Habitable Volume (NHV)
+            NTRS 20200002973 Pressurized hull geometry ({totalHullM3} m³): NHV 147.19 m³ | Systems 104 m³ | Storage 52 m³
           </span>
         </div>
 
@@ -79,11 +85,11 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
             borderRadius: 'var(--r-0)',
           }}
         >
-          NHV / CREW: <strong style={{ color: nhvPerPerson >= 20 ? 'var(--sage)' : 'var(--caution)' }}>{nhvPerPerson.toFixed(1)} m³/person</strong>
+          NHV / CREW: <strong style={{ color: nhvPerPerson < 11.3 ? 'var(--alarm-p1)' : nhvPerPerson < 20 ? 'var(--caution)' : 'var(--hmi-text)' }}>{nhvPerPerson.toFixed(2)} m³/person</strong>
         </div>
       </div>
 
-      {/* 3D Isometric SVG Hull Cube Diagram */}
+      {/* Proportional 2D Stacked Bar View */}
       <div
         style={{
           backgroundColor: 'var(--hmi-surface-elevated)',
@@ -92,92 +98,171 @@ export function L2VehicleStowageView({ currentStep }: L2VehicleStowageViewProps)
           borderRadius: 'var(--r-1)',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <svg
-          viewBox="0 0 540 260"
-          style={{ width: '100%', maxWidth: '540px', height: 'auto' }}
-          aria-label="Vehicle Pressurized Hull 3D Isometric View"
-        >
-          {/* Top Face - Net Habitable Volume (Habitation Deck) */}
-          <polygon
-            points="270,20 450,90 270,160 90,90"
-            fill="var(--hmi-track)"
-            stroke="var(--hmi-border)"
-            strokeWidth="1.5"
-          />
-          <text x="270" y="85" textAnchor="middle" fill="var(--hmi-text)" fontSize="13" fontWeight="bold" fontFamily="monospace">
-            HABITATION DECK (NHV): {nhvTotalM3} m³
-          </text>
-          <text x="270" y="105" textAnchor="middle" fill="var(--hmi-text-dim)" fontSize="11" fontFamily="monospace">
-            {nhvPerPerson.toFixed(1)} m³ / crewmember
-          </text>
-
-          {/* Left Face - Logistics & Consumables Stowage */}
-          <polygon
-            points="90,90 270,160 270,240 90,170"
-            fill="var(--tier-study)"
-            stroke="var(--hmi-border)"
-            strokeWidth="1.5"
-          />
-          <text x="170" y="165" fill="var(--color-basalt)" fontSize="11" fontWeight="bold" fontFamily="monospace">
-            STOWAGE: {stowageM3} m³
-          </text>
-          <text x="170" y="180" fill="var(--color-basalt)" fontSize="9" fontFamily="monospace">
-            Water / Food / Spares
-          </text>
-
-          {/* Right Face - ECLSS Equipment & Thermal Systems */}
-          <polygon
-            points="270,160 450,90 450,170 270,240"
-            fill="var(--hmi-fill)"
-            stroke="var(--hmi-border)"
-            strokeWidth="1.5"
-          />
-          <text x="360" y="165" fill="var(--ink)" fontSize="11" fontWeight="bold" fontFamily="monospace">
-            SYSTEMS: {systemsM3} m³
-          </text>
-          <text x="360" y="180" fill="var(--ink-dim)" fontSize="9" fontFamily="monospace">
-            ECLSS Racks / Avionics
-          </text>
-        </svg>
-
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)', marginTop: 'var(--space-2)' }}>
-          * Exterior cargo and unpressurized science bays are mounted outside the pressurized habitat pressure hull.
-        </div>
-      </div>
-
-      {/* Volume Allocation Telemetry */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 'var(--space-3)',
         }}
       >
-        <div style={{ backgroundColor: 'var(--hmi-surface-elevated)', padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-1)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>TOTAL PRESSURIZED</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-lead)', fontWeight: 700, color: 'var(--hmi-text)' }}>{totalHullM3} m³</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--tier-req)' }}>NASA DRA 5.0 Spec</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+          <span>PROPORTIONAL 2D VOLUMETRIC ALLOCATION</span>
+          <span>HULL VOLUME: {totalHullM3.toFixed(1)} m³ (100.0%)</span>
         </div>
 
-        <div style={{ backgroundColor: 'var(--hmi-surface-elevated)', padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-1)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>NET HABITABLE VOLUME</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-lead)', fontWeight: 700, color: 'var(--sage)' }}>{nhvTotalM3} m³</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>{nhvPerPerson.toFixed(1)} m³/person</div>
+        {/* 2D Stacked Bar Track */}
+        <div
+          style={{
+            height: '40px',
+            backgroundColor: 'var(--hmi-track)',
+            border: '1px solid var(--hmi-border)',
+            borderRadius: 'var(--r-0)',
+            display: 'flex',
+            overflow: 'hidden',
+          }}
+          aria-label="Proportional 2D Pressurized Volume Allocation Bar"
+        >
+          {/* Segment 1: Net Habitable Volume (NHV) 147.19 m³ */}
+          <div
+            style={{
+              width: `${nhvPct}%`,
+              backgroundColor: 'var(--hmi-fill)',
+              borderRight: '2px solid var(--color-basalt)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              padding: '0 var(--space-1)',
+            }}
+            title={`Net Habitable Volume: ${nhvTotalM3} m³ (${nhvPct.toFixed(1)}%)`}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-caption)',
+                fontWeight: 700,
+                color: 'var(--color-basalt)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              NHV {nhvTotalM3} m³ ({nhvPct.toFixed(1)}%)
+            </span>
+          </div>
+
+          {/* Segment 2: Systems & ECLSS 104 m³ */}
+          <div
+            style={{
+              width: `${systemsPct}%`,
+              backgroundColor: 'var(--hmi-surface-elevated)',
+              borderRight: '2px solid var(--color-basalt)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              padding: '0 var(--space-1)',
+            }}
+            title={`Systems & Avionics: ${systemsM3} m³ (${systemsPct.toFixed(1)}%)`}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-caption)',
+                fontWeight: 700,
+                color: 'var(--hmi-text)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              SYSTEMS {systemsM3} m³ ({systemsPct.toFixed(1)}%)
+            </span>
+          </div>
+
+          {/* Segment 3: Stowage 52 m³ */}
+          <div
+            style={{
+              width: `${stowagePct}%`,
+              backgroundColor: 'var(--hmi-track)',
+              borderRight: unallocatedPct > 0 ? '2px solid var(--color-basalt)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              padding: '0 var(--space-1)',
+            }}
+            title={`Stowage: ${stowageM3} m³ (${stowagePct.toFixed(1)}%)`}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-caption)',
+                fontWeight: 700,
+                color: 'var(--hmi-text-dim)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              STOWAGE {stowageM3} m³ ({stowagePct.toFixed(1)}%)
+            </span>
+          </div>
+
+          {/* Segment 4: Unallocated Margin */}
+          {unallocatedPct > 0 && (
+            <div
+              style={{
+                width: `${unallocatedPct}%`,
+                backgroundColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+              title={`Margin: ${unallocatedM3.toFixed(2)} m³ (${unallocatedPct.toFixed(1)}%)`}
+            >
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--hmi-text-dim)' }}>
+                {unallocatedM3.toFixed(1)} m³
+              </span>
+            </div>
+          )}
         </div>
 
-        <div style={{ backgroundColor: 'var(--hmi-surface-elevated)', padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-1)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>STOWAGE VOLUME</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-lead)', fontWeight: 700, color: 'var(--tier-study)' }}>{stowageM3} m³</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>CTBE Standard Containers</div>
-        </div>
+        {/* Breakdown Card Grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--space-2)',
+            marginTop: 'var(--space-1)',
+          }}
+        >
+          <div style={{ padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-0)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              NET HABITABLE VOLUME (NHV)
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
+              {nhvTotalM3} m³ ({nhvPct.toFixed(1)}%)
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              {nhvPerPerson.toFixed(2)} m³/person (DRA 5.0 / Woolford)
+            </div>
+          </div>
 
-        <div style={{ backgroundColor: 'var(--hmi-surface-elevated)', padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-1)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>SYSTEMS & AVIONICS</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-lead)', fontWeight: 700, color: 'var(--hmi-text)' }}>{systemsM3} m³</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>Internal Equipment Racks</div>
+          <div style={{ padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-0)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              SYSTEMS & AVIONICS
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
+              {systemsM3} m³ ({systemsPct.toFixed(1)}%)
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              ECLSS Racks, OGA, Sabatier, WRS, Ducts
+            </div>
+          </div>
+
+          <div style={{ padding: 'var(--space-2)', border: '1px solid var(--hmi-border)', borderRadius: 'var(--r-0)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              CONSUMABLES STOWAGE
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--hmi-text)' }}>
+              {stowageM3} m³ ({stowagePct.toFixed(1)}%)
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--hmi-text-dim)' }}>
+              CTBE lockers, water tanks, dry food rations
+            </div>
+          </div>
         </div>
       </div>
     </div>

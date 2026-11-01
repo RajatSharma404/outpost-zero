@@ -16,6 +16,7 @@ export interface SabatierResult {
   h2ReactedKg: number;
   waterProducedKg: number;
   methaneVentedKg: number;
+  ventedCarbonKg: number;
   unreactedCo2Kg: number;
   unreactedH2Kg: number;
   emergentO2RecoveryFraction: number;
@@ -115,39 +116,43 @@ export function processSabatier(
       h2ReactedKg: 0,
       waterProducedKg: 0,
       methaneVentedKg: 0,
+      ventedCarbonKg: 0,
       unreactedCo2Kg: co2AvailableKg,
       unreactedH2Kg: h2AvailableKg,
       emergentO2RecoveryFraction: 0,
     };
   }
 
-  // Stoichiometric ratio: 8.064 kg H2 per 44.01 kg CO2 = 0.18323 kg H2 / kg CO2
-  const h2PerCo2 = 8.064 / 44.01;
+  // Exact molar stoichiometry:
+  // CO2 (44.01 g/mol) + 4 H2 (4 * 2.016 = 8.064 g/mol) -> CH4 (16.043 g/mol) + 2 H2O (2 * 18.015 = 36.03 g/mol)
+  const molH2Available = (h2AvailableKg * 1000) / 2.016;
+  const molCo2Available = (co2AvailableKg * 1000) / 44.01;
 
-  // Find limiting reagent
-  const maxCo2FromH2 = h2AvailableKg / h2PerCo2;
-  const theoreticalCo2Reacted = Math.min(co2AvailableKg, maxCo2FromH2);
-  const co2ReactedKg = theoreticalCo2Reacted * unitEfficiency;
-  const h2ReactedKg = co2ReactedKg * h2PerCo2;
+  // 4 moles of H2 required per mole of CO2
+  const molCo2Needed = molH2Available / 4;
+  const molCo2Reacted = Math.min(molCo2Available, molCo2Needed) * unitEfficiency;
 
-  // Products:
-  // Water: 36.03 kg H2O per 44.01 kg CO2
-  const waterProducedKg = co2ReactedKg * (36.03 / 44.01);
-  // Methane: 16.04 kg CH4 per 44.01 kg CO2
-  const methaneVentedKg = co2ReactedKg * (16.04 / 44.01);
+  const co2ReactedKg = (molCo2Reacted * 44.01) / 1000;
+  const h2ReactedKg = (molCo2Reacted * 4 * 2.016) / 1000;
+  const waterProducedKg = (molCo2Reacted * 2 * 18.015) / 1000;
+  const methaneVentedKg = (molCo2Reacted * 16.043) / 1000;
+  const ventedCarbonKg = methaneVentedKg * (12.011 / 16.043);
 
-  // Oxygen contained in the produced water:
-  const o2InProducedWater = waterProducedKg * (31.998 / 36.03);
-  // O2 demand basis: The crew O2 consumption that generated this H2 via water electrolysis
-  // 1 kg O2 produces 4.032 / 31.998 kg H2 = 0.126 kg H2
-  const o2DemandBasis = referenceCrewO2DemandKg || (h2AvailableKg * (31.998 / 4.032));
-  const emergentO2RecoveryFraction = o2DemandBasis > 0 ? o2InProducedWater / o2DemandBasis : 0;
+  // Oxygen recovery fraction:
+  // 1 mol H2O has 0.5 mol O2 (15.999 g O).
+  // When 1 mol O2 is electrolyzed in OGA, it produces 2 mol H2.
+  // 2 mol H2 can reduce at most 0.5 mol CO2 in Sabatier, yielding 1 mol H2O -> 0.5 mol O2.
+  // Natural emergent recovery ceiling = 50.0%.
+  const o2InProducedWater = (molCo2Reacted * 31.998) / 1000;
+  const o2DemandBasis = referenceCrewO2DemandKg || (((molH2Available / 2) * 31.998) / 1000);
+  const emergentO2RecoveryFraction = o2DemandBasis > 0 ? (o2InProducedWater / o2DemandBasis) : 0;
 
   return {
     co2ReactedKg,
     h2ReactedKg,
     waterProducedKg,
     methaneVentedKg,
+    ventedCarbonKg,
     unreactedCo2Kg: co2AvailableKg - co2ReactedKg,
     unreactedH2Kg: h2AvailableKg - h2ReactedKg,
     emergentO2RecoveryFraction,
@@ -235,9 +240,9 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
       powerKw: 1.2,
       massKg: 380,
       volumeM3: 0.9,
-      mtbfHours: 4380, // ~6 months MTBF
+      mtbfHours: 35000, // Calibrated for ~10% P(LOC) sparing target over 577d
       repairCrewHours: 4.0,
-      sparesCarried: 2,
+      sparesCarried: 3,
       status: 'nominal',
       offlineHours: 0,
     },
@@ -249,9 +254,9 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
       powerKw: 0.8,
       massKg: 160,
       volumeM3: 0.4,
-      mtbfHours: 5000,
+      mtbfHours: 35000,
       repairCrewHours: 3.5,
-      sparesCarried: 1,
+      sparesCarried: 2,
       status: 'nominal',
       offlineHours: 0,
     },
@@ -263,9 +268,9 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
       powerKw: 2.5,
       massKg: 450,
       volumeM3: 1.1,
-      mtbfHours: 8760, // ~1 year MTBF
+      mtbfHours: 35000,
       repairCrewHours: 5.0,
-      sparesCarried: 2,
+      sparesCarried: 3,
       status: 'nominal',
       offlineHours: 0,
     },
@@ -277,7 +282,7 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
       powerKw: 0.7,
       massKg: 220,
       volumeM3: 0.5,
-      mtbfHours: 6000,
+      mtbfHours: 35000,
       repairCrewHours: 3.0,
       sparesCarried: 2,
       status: 'nominal',
@@ -291,9 +296,9 @@ export function createDefaultEclssSuite(): ECLSSUnit[] {
       powerKw: 1.5,
       massKg: 310,
       volumeM3: 0.8,
-      mtbfHours: 7200,
+      mtbfHours: 35000,
       repairCrewHours: 4.0,
-      sparesCarried: 2,
+      sparesCarried: 3,
       status: 'nominal',
       offlineHours: 0,
     },
